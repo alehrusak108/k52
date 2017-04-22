@@ -16,6 +16,7 @@ set(DSP_HEADERS
     ${DSP_COMMON_INCLUDE}/wavelet.h
     ${DSP_COMMON_INCLUDE}/transform/fast_fourier_transform.h
     ${DSP_COMMON_INCLUDE}/transform/fourier_transform.h
+    ${DSP_COMMON_INCLUDE}/transform/cuda_fast_fourier_transform.h
     ${DSP_COMMON_INCLUDE}/transform/i_fourier_transform.h
     ${DSP_COMMON_INCLUDE}/transform/inverse_fourier_transform.h
     ${DSP_COMMON_INCLUDE}/transform/circular_convolution.h
@@ -40,6 +41,7 @@ set(DSP_SOURCE
     spline_based_wavelet_function.cpp
     wavelet.cpp
     transform/fast_fourier_transform.cpp
+    transform/cuda_fast_fourier_transform.cu
     transform/fourier_transform.cpp
     transform/inverse_fourier_transform.cpp
     transform/circular_convolution.cpp
@@ -54,6 +56,7 @@ include_directories(
     ${k52_SOURCE_DIR}/include
     ${K52_BOOST_INCLUDE_DIRS}
     ${FFTW3_INCLUDE_DIR}
+    ${CUDA_INCLUDE_DIRS}
 )
 
 set(k52_DSP_LIB k52_dsp)
@@ -70,5 +73,12 @@ if(K52_LIBS_TYPE_DYNAMIC)
         ${FFTW3_LIBRARIES}
     )
 endif()
+
+# Look for *.cu (CUDA) files
+file(GLOB CUDA_FILES *.cu)
+# Add executable of CUDA-file
+# cuda_add_executable(cuda_fast_fourier_transform transform/cuda_fast_fourier_transform.cu ${CUDA_FILES})
+# Specify, that this executable should be linked against ${CUDA_LIBRARIES}
+#target_link_libraries(cuda_fast_fourier_transform ${CUDA_LIBRARIES})
 
 install(TARGETS ${k52_DSP_LIB} DESTINATION ${k52_LIB_DESTINATION})

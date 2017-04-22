@@ -30,7 +30,7 @@ MpiWorkerPool::MpiWorkerPool()
     communicator_ = new boost::mpi::communicator();
 
     std::cout<<"Rank "<<communicator_->rank()<<" of "<<
-             communicator_->size()<<" starded on "<<
+             communicator_->size()<<" started on "<<
              environment_->processor_name()<<" processor."<<std::endl;
 
     if(communicator_->rank() != constants::kServerRank)

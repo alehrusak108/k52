@@ -36,7 +36,7 @@ public:
 
         in_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * sequence_size_);
         out_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * sequence_size_);
-        plan_ = fftw_plan_dft_1d(sequence_size_, in_, out_, FFTW_FORWARD, FFTW_PATIENT);
+        plan_ = fftw_plan_dft_1d(sequence_size_, in_, out_, FFTW_FORWARD, FFTW_ESTIMATE);
     }
 
     ~FastFourierTransformImpl()
@@ -51,7 +51,7 @@ public:
     std::vector< std::complex< double > > Transform(
             const std::vector< std::complex< double > > &sequence)
     {
-        if(sequence_size_ != sequence.size())
+        if (sequence_size_ != sequence.size())
         {
             throw std::invalid_argument(
                     "FastFourierTransform can transform only data of the same size as was specified on construction.");
@@ -66,15 +66,15 @@ public:
         //Actual computations
         fftw_execute(plan_);
 
-        vector< complex< double > > result(sequence_size_);
+        /*vector< complex< double > > result(sequence_size_);
 
         for (size_t n = 0; n < sequence_size_; ++n)
         {
             result[n].real( out_[n][0] );
             result[n].imag( out_[n][1] );
-        }
+        }*/
 
-        return result;
+        return vector< complex< double > >();
     }
 
 private:
@@ -99,8 +99,8 @@ FastFourierTransform::~FastFourierTransform()
     delete fast_fourier_transform_impl_;
 }
 
-vector< complex< double > > FastFourierTransform::Transform(
-        const vector< complex< double > > &sequence) const
+vector< complex< double > > FastFourierTransform::DirectTransform(
+        const vector<complex<double> > &sequence) const
 {
     return fast_fourier_transform_impl_->Transform(sequence);
 }

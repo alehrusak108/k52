@@ -19,7 +19,7 @@ include(configuration/common-config.cmake)
 include(configuration/fftw3-config.cmake)
 include(configuration/boost-config.cmake)
 include(configuration/cuda-config.cmake)
-include(configuration/mpi-config.cmake)
+#include(configuration/mpi-config.cmake)
 
 ### Libraries
 add_subdirectory(src/common)
@@ -34,7 +34,7 @@ add_subdirectory(src/optimization)
 add_subdirectory(src/dsp)
 
 # Unit tests
-add_subdirectory(src/unit_tests)
+#add_subdirectory(src/unit_tests)
 
 ## Create config-file package on install
 # Generate configuration file for all subprojects

@@ -19,7 +19,7 @@ std::vector< std::complex< double > > InverseFourierTransform::Transform(const s
 {
     size_t N = sequence.size();
 
-    std::vector< std::complex< double > > directTransformResult = fourier_transform_->Transform(
+    std::vector< std::complex< double > > directTransformResult = fourier_transform_->DirectTransform(
             Helpers::Conjugate(sequence)
     );
     std::vector< std::complex< double > > inverseTransformResult = Helpers::Conjugate(directTransformResult);

@@ -2,7 +2,7 @@ include(FindCUDA)
 
 find_package(CUDA REQUIRED)
 
-# Show all the compiler output
+# Shows all the NVCC compiler output
 set(CUDA_VERBOSE_BUILD ON)
 
 if(CUDA_FOUND)
@@ -17,7 +17,7 @@ if(CUDA_FOUND)
     else()
         message("-- CUDA device emulation is: ${CUDA_BUILD_EMULATION}. Sources are compiled to be run on a CPU. ${K52_MESSAGE_POSTFIX}")
     endif()
-    add_definitions(-DBUILD_WITH_CUFFT)
+    add_definitions(-DBUILD_WITH_CUDA)
     message("${K52_MESSAGE_PREFIX} CUDA configuration checking finished. ${K52_MESSAGE_POSTFIX}")
 endif()
 
@@ -26,6 +26,9 @@ if(NOT CUDA_FOUND)
 endif()
 
 # NVCC Compiler additional flags
+# list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_10,code=sm_10) - deprecated
+list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_11,code=sm_11)
+list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_12,code=sm_12)
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_20,code=sm_20)
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_30,code=sm_30)
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_35,code=sm_35)

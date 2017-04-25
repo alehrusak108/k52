@@ -21,8 +21,8 @@ public:
     ///Default constructor should be explicitly defined if DISALLOW_COPY_AND_ASSIGN used
     IFourierTransform() {}
     virtual ~IFourierTransform() {};
-    virtual std::vector< std::complex< double > > Transform(
-            const std::vector< std::complex< double > >& sequence) const = 0;
+    virtual std::vector< std::complex< double > > DirectTransform(
+            const std::vector<std::complex<double> > &sequence) const = 0;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(IFourierTransform);

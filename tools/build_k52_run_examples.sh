@@ -17,8 +17,14 @@ cmake ..
 make
 
 #Run examples
-echo Run continuous_optimization_example:
-./continuous_optimization/continuous_optimization_example
+#echo Run continuous_optimization_example:
+#./continuous_optimization/continuous_optimization_example
 
-echo Run genetic_algorithm_example:
-mpiexec -np 2 ./genetic_algorithm/genetic_algorithm_example
+#echo Run genetic_algorithm_example:
+#mpiexec -np 2 ./genetic_algorithm/genetic_algorithm_example
+
+echo ''
+echo Run fourier_based_circular_convolution:
+echo ''
+./fourier_based_circular_convolution/fourier_based_circular_convolution
+echo ''

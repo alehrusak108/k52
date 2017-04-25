@@ -13,15 +13,16 @@ std::vector< std::complex< double > > k52::dsp::FourierBasedCircularConvolution:
         const std::vector< std::complex< double > > &first_sequence,
         const std::vector< std::complex< double > > &second_sequence) const
 {
-    if(first_sequence.size() != second_sequence.size())
+    if (first_sequence.size() != second_sequence.size())
     {
         throw std::runtime_error("Can evaluate convolution only for sequences of the same size.");
     }
 
     size_t N = first_sequence.size();
 
-    std::vector< std::complex< double > > first_sequence_transform = fourier_transform_->Transform(first_sequence);
-    std::vector< std::complex< double > > second_sequence_transform = fourier_transform_->Transform(second_sequence);
+    std::vector< std::complex< double > > first_sequence_transform = fourier_transform_->DirectTransform(first_sequence);
+    std::vector< std::complex< double > > second_sequence_transform = fourier_transform_->DirectTransform(
+            second_sequence);
 
     std::vector< std::complex< double > > multiplication_transform(N);
 

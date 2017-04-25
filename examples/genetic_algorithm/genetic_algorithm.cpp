@@ -107,9 +107,9 @@ vector<IDiscreteParameters::shared_ptr> GetInitialParameters(size_t populationSi
 
 int main(int argc, char* argv[])
 {
-    time_t begin, end;
+    time_t begin;
     time(&begin);
-    cout << "Begin" << endl;
+    cout << "Started." << endl;
 
     int populationSize = 300;
     int numberOfIterations = 10;
@@ -162,7 +162,9 @@ int main(int argc, char* argv[])
     cout<<"Fitness = "<<of(&parameters)<<endl;
     /////////////Genetic Algrythm end///////////////
 
+    time_t end;
     time(&end);
-    cout << "Time elapsed: " << difftime(end, begin) << " seconds "<< endl;
+    cout << "End." << endl;
+    cout << "Time elapsed: " << difftime(end, begin) << " seconds " << endl;
     return 0;
 }

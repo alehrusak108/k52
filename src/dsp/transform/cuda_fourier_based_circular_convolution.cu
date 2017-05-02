@@ -65,27 +65,24 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     vector<complex<double> > second_sequence_transform =
             cufft_transformer_->DirectTransform(second_sequence);
 
-    cufftComplex* h_first = CudaUtils::VectorToCufftComplex(first_sequence_transform);
-    cufftComplex* h_second = CudaUtils::VectorToCufftComplex(second_sequence_transform);
-
     int signal_memory_size = sizeof(cufftComplex) * signal_size;
 
     cufftComplex* d_first;
     cudaMalloc((void**) &d_first, signal_memory_size);
-    cudaMemcpy(d_first, h_first, signal_memory_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_first, first_sequence_transform.data(), signal_memory_size, cudaMemcpyHostToDevice);
 
     cufftComplex* d_second;
     cudaMalloc((void**) &d_second, signal_memory_size);
-    cudaMemcpy(d_second, h_second, signal_memory_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_second, second_sequence_transform.data(), signal_memory_size, cudaMemcpyHostToDevice);
 
     cufftComplex* d_multiplication;
     cudaMalloc((void**) &d_multiplication, signal_memory_size);
 
     MultiplySignals<<<64, 128>>>(d_first, d_second, d_multiplication, signal_size);
 
-    vector<complex<double> > multiplication_vector = CudaUtils::CufftComplexToVector(d_multiplication, signal_size);
+    vector<complex<double> > convolution = CudaUtils::CufftComplexToVector(d_multiplication, signal_size);
 
-    return cufft_transformer_->InverseTransform(multiplication_vector);
+    return cufft_transformer_->InverseTransform(convolution);
 }
 
 #endif //BUILD_WITH_CUDA

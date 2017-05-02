@@ -3,9 +3,6 @@
 #include <cstdio>
 #include <stdexcept>
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "TemplateArgumentsIssues"
-
 #ifdef BUILD_WITH_CUDA
 
 #include <cufft.h>
@@ -26,15 +23,19 @@ using ::std::complex;
 using ::std::invalid_argument;
 using ::std::runtime_error;
 
-namespace k52 {
-namespace dsp {
+namespace k52
+{
+namespace dsp
+{
 
 #ifdef BUILD_WITH_CUDA
 
-// Using pImpl approach to hide CUFFT for outside use
-// NOTE: Prefix "d_" means that variable is allocated in CUDA Device Memory
-//       Prefix "h_" means that variable is allocated in RAM (Host)
-class CudaFastFourierTransform::CudaFastFourierTransformImpl {
+// Using pImpl approach to hide CUFFT from outside use
+// NOTE: Prefix "device_" means that variable is allocated in CUDA Device Memory
+//       Prefix "host_" means that variable is allocated in RAM (Host)
+
+class CudaFastFourierTransform::CudaFastFourierTransformImpl
+{
 
 public:
     CudaFastFourierTransformImpl(size_t sequence_size, int executions_planned)
@@ -47,6 +48,100 @@ public:
         }
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
+
+        cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
+        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+    }
+
+    ~CudaFastFourierTransformImpl() {
+
+        std::cout << "Destroying CUFFT Context..." << std::endl;
+
+        // Destroy CUFFT Execution Plan
+        cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
+        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl;
+
+        boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
+    }
+
+    vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)
+    {
+        return Transform(sequence, CUFFT_FORWARD);
+    }
+
+    vector<complex<double> > InverseTransform(const vector<complex<double> > &sequence)
+    {
+        return Transform(sequence, CUFFT_INVERSE);
+    }
+
+    vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction) const
+    {
+
+        if (signal_size_ != sequence.size()) {
+            throw std::invalid_argument(
+                    "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
+        }
+
+        cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
+
+        // Copy sequence data memory to device
+        cufftComplex *device_signal;
+        cudaMalloc((void**) &device_signal, signal_memory_size_);
+        cudaMemcpy(device_signal, host_signal, signal_memory_size_, cudaMemcpyHostToDevice);
+        std::cout << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
+
+        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, device_signal, device_signal, transform_direction);
+        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
+
+        // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
+        cufftComplex *host_result = (cufftComplex *) malloc(signal_memory_size_);
+        cudaMemcpy(host_result, device_signal, signal_memory_size_, cudaMemcpyDeviceToHost);
+
+        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_result, signal_size_);
+
+        cudaFree(device_signal);
+        cudaFree(host_result);
+
+        return result_vector;
+    }
+
+private:
+
+    // static fields and initializers
+    static boost::mutex cuda_mutex_;
+
+    // instance fields and initializers
+    size_t signal_size_;
+    int executions_planned_;
+    int signal_memory_size_;
+
+    cufftHandle cufft_execution_plan_;
+};
+
+boost::mutex CudaFastFourierTransform::CudaFastFourierTransformImpl::cuda_mutex_;
+
+CudaFastFourierTransform::CudaFastFourierTransform(size_t sequence_size, int planned_executions)
+{
+    cuda_fast_fourier_transform_impl_ =
+            boost::make_shared<CudaFastFourierTransformImpl>(sequence_size, planned_executions);
+}
+
+CudaFastFourierTransform::~CudaFastFourierTransform()
+{
+}
+
+vector<complex<double> > CudaFastFourierTransform::DirectTransform(
+        const vector<complex<double> > &sequence) const
+{
+    return cuda_fast_fourier_transform_impl_->DirectTransform(sequence);
+}
+
+vector<complex<double> > CudaFastFourierTransform::InverseTransform(
+        const vector<complex<double> > &sequence) const
+{
+    return cuda_fast_fourier_transform_impl_->InverseTransform(sequence);
+}
 
         // Planned Execitions (batch) other than 1 for cufftPlan1d() have been deprecated.
         // Here used cufftPlanMany() for multiple execution.
@@ -71,118 +166,7 @@ public:
                 executions_planned_
         );*/
 
-        cudaMalloc((void**) &d_signal_, signal_memory_size_);
-        std::cout << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
-
-        cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
-        std::cout << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
-    }
-
-    ~CudaFastFourierTransformImpl() {
-
-        std::cout << "Destroying CUFFT Context:" << std::endl;
-
-        // Destroy CUFFT Execution Plan
-        cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
-        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl;
-
-        cudaFree(d_signal_);
-        std::cout << "Signal memory cleared. " << std::endl;
-
-        boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
-    }
-
-    vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)
-    {
-
-        if (signal_size_ != sequence.size()) {
-            throw std::invalid_argument(
-                    "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
-        }
-
-        // Allocate host memory for the signal
-        cufftComplex* h_signal = CudaUtils::VectorToCufftComplex(sequence);
-
-        // Copy signal host memory to device
-        cudaMemcpy(d_signal_, h_signal, signal_memory_size_, cudaMemcpyHostToDevice);
-
-        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
-        cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, d_signal_, d_signal_, CUFFT_FORWARD);
-
-        std::cout << "CUFFT DIRECT C2C Execution result: " << execution_result << std::endl;
-
-        // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
-        cufftComplex* h_result = (cufftComplex *) malloc(signal_memory_size_);
-        cudaMemcpy(h_result, d_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-
-        //return vector<complex<double> >();
-        return CudaUtils::CufftComplexToVector(h_result, signal_size_);
-    }
-
-    vector<complex<double> > InverseTransform(const vector<complex<double> > &sequence)
-    {
-
-        if (signal_size_ != sequence.size()) {
-            throw std::invalid_argument(
-                    "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
-        }
-
-        // Allocate host memory for the signal
-        cufftComplex* h_signal = CudaUtils::VectorToCufftComplex(sequence);
-
-        // Copy host signal memory to device
-        cudaMemcpy(d_signal_, h_signal, signal_memory_size_, cudaMemcpyHostToDevice);
-
-        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
-        cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, d_signal_, d_signal_, CUFFT_INVERSE);
-
-        std::cout << "CUFFT INVERSE C2C Execution result: " << execution_result << std::endl;
-
-        // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
-        cufftComplex* h_result = (cufftComplex *) malloc(signal_memory_size_);
-        cudaMemcpy(h_result, d_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-
-        return CudaUtils::CufftComplexToVector(h_result, signal_size_);
-    }
-
-private:
-
-    // static fields and initializers
-    static boost::mutex cuda_mutex_;
-
-    // instance fields and initializers
-    size_t signal_size_;
-    int executions_planned_;
-    int signal_memory_size_;
-
-    cufftComplex *d_signal_;
-
-    cufftHandle cufft_execution_plan_;
-};
-
-boost::mutex CudaFastFourierTransform::CudaFastFourierTransformImpl::cuda_mutex_;
-
-CudaFastFourierTransform::CudaFastFourierTransform(size_t sequence_size, int planned_executions) {
-    cuda_fast_fourier_transform_impl_ =
-            boost::make_shared<CudaFastFourierTransformImpl>(sequence_size, planned_executions);
-}
-
-CudaFastFourierTransform::~CudaFastFourierTransform() {
-}
-
-vector<complex<double> > CudaFastFourierTransform::DirectTransform(
-        const vector<complex<double> > &sequence) const {
-    return cuda_fast_fourier_transform_impl_->DirectTransform(sequence);
-}
-
-vector<complex<double> > CudaFastFourierTransform::InverseTransform(
-        const vector<complex<double> > &sequence) const {
-    return cuda_fast_fourier_transform_impl_->InverseTransform(sequence);
-}
-
 #endif //BUILD_WITH_CUDA
 
 } // namespace dsp
 } // namespace k52
-
-#pragma clang diagnostic pop

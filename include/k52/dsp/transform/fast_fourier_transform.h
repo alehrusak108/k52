@@ -18,6 +18,9 @@ public:
     virtual std::vector< std::complex< double > > DirectTransform(
             const std::vector<std::complex<double> > &sequence) const;
 
+    virtual std::vector< std::complex< double > > InverseTransform(
+            const std::vector<std::complex<double> > &sequence) const;
+
 private:
     class FastFourierTransformImpl;
     FastFourierTransformImpl* fast_fourier_transform_impl_;

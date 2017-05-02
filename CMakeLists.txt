@@ -52,6 +52,7 @@ set(k52_LIBS
     ${K52_MPI_LIBRARIES}
     ${CUDA_LIBRARIES}
     ${CUDA_CUFFT_LIBRARIES}
+    ${k52_DSP_CUDA_FFT_LIB}
 )
 
 #TODO this is a temporary fix, remove it when ifdefs will be removed from headers

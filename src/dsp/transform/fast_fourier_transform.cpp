@@ -25,18 +25,18 @@ class FastFourierTransform::FastFourierTransformImpl
 {
 public:
     FastFourierTransformImpl(size_t sequence_size)
-        : sequence_size_(sequence_size)
+        : signal_size_(sequence_size)
     {
         boost::mutex::scoped_lock scoped_lock(fftw_mutex_);
 
-        if(sequence_size <= 0)
+        if (sequence_size <= 0)
         {
             throw std::invalid_argument("sequence_size <= 0");
         }
 
-        in_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * sequence_size_);
-        out_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * sequence_size_);
-        plan_ = fftw_plan_dft_1d(sequence_size_, in_, out_, FFTW_FORWARD, FFTW_ESTIMATE);
+        in_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * signal_size_);
+        out_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * signal_size_);
+        plan_ = fftw_plan_dft_1d(signal_size_, in_, out_, FFTW_FORWARD, FFTW_PATIENT);
     }
 
     ~FastFourierTransformImpl()
@@ -48,37 +48,42 @@ public:
         fftw_free(out_);
     }
 
-    std::vector< std::complex< double > > Transform(
-            const std::vector< std::complex< double > > &sequence)
+    vector< complex< double > > DirectTransform(
+            const vector< complex< double > > &sequence)
     {
-        if (sequence_size_ != sequence.size())
+        if (signal_size_ != sequence.size())
         {
             throw std::invalid_argument(
                     "FastFourierTransform can transform only data of the same size as was specified on construction.");
         }
 
-        for (size_t n = 0; n < sequence_size_; ++n)
+        for (size_t n = 0; n < signal_size_; ++n)
         {
             in_[n][0] = sequence[n].real();
             in_[n][1] = sequence[n].imag();
         }
 
-        //Actual computations
+        // Actual computations
         fftw_execute(plan_);
 
-        /*vector< complex< double > > result(sequence_size_);
-
-        for (size_t n = 0; n < sequence_size_; ++n)
+        vector< complex< double > > result(signal_size_);
+        for (size_t n = 0; n < signal_size_; ++n)
         {
             result[n].real( out_[n][0] );
             result[n].imag( out_[n][1] );
-        }*/
+        }
+        return result;
+    }
 
+    vector< complex< double > > InverseTransform(
+            const vector< complex< double > > &sequence)
+    {
+        // TODO: Stubbed. Implementation needed.
         return vector< complex< double > >();
     }
 
 private:
-    size_t sequence_size_;
+    size_t signal_size_;
 
     fftw_complex* in_;
     fftw_complex* out_;
@@ -100,9 +105,16 @@ FastFourierTransform::~FastFourierTransform()
 }
 
 vector< complex< double > > FastFourierTransform::DirectTransform(
-        const vector<complex<double> > &sequence) const
+        const vector< complex< double > > &sequence) const
 {
-    return fast_fourier_transform_impl_->Transform(sequence);
+    return fast_fourier_transform_impl_->DirectTransform(sequence);
+}
+
+
+vector< complex<double> > FastFourierTransform::InverseTransform(
+        const vector< complex< double > > &sequence) const
+{
+    return fast_fourier_transform_impl_->InverseTransform(sequence);
 }
 
 #else

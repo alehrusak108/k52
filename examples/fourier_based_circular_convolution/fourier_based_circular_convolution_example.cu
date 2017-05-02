@@ -11,52 +11,85 @@
 
 #endif
 
-#define SIGNAL_SIZE 10000000
 #define CUFFT_EXECUTIONS_PLANNED 1
 
 using namespace std;
 
 using namespace k52::dsp;
 
-int main(int argc, char* argv[])
-{
-    srand(time(NULL));
+void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 
-    vector<complex<double> > input_signal(SIGNAL_SIZE);
-    for (size_t index = 0; index < SIGNAL_SIZE; index++) {
-        input_signal[index].real(1 + rand() % 10);
-        input_signal[index].imag(-5 + rand() % 11);
-    }
+    cout << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
-    cout << endl << "Test signal size is: " << SIGNAL_SIZE << endl;
-    
-    clock_t cufft_start_time = clock();
-    cout << endl << "[ CUFFT Performance TEST ] STARTED." << endl << endl;
+    clock_t planning_time = clock();
 
-    CudaFastFourierTransform cufftTransformer(SIGNAL_SIZE, CUFFT_EXECUTIONS_PLANNED);
+    CudaFastFourierTransform cufftTransformer(input_signal.size(), CUFFT_EXECUTIONS_PLANNED);
+
+    cout << "CUFFT Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+
+    clock_t execution_time = clock();
 
     // In this test, we don't care about transformation result
     cufftTransformer.DirectTransform(input_signal);
 
-    /*for (int i = 0; i < SIGNAL_SIZE; i++) {
-        cout << output[i].real() << "\t" << output[i].imag() << endl;
+    /*cout << endl << "CUFFT OUTPUT" << endl;
+    for (int i = 0; i < input_signal.size(); i++) {
+        cout << output[i].real() << "\t\t" << output[i].imag() << endl;
     }*/
 
-    cout << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - cufft_start_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    cout << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
+}
 
-    cout << "===============================================================================" << endl << endl;
+void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     cout << "[ FFTW3 Performance TEST ] STARTED." << endl;
-    clock_t fftw3_start_time = clock();
 
-    FastFourierTransform fftw3Transformer(SIGNAL_SIZE);
+    clock_t planning_time = clock();
 
-    cout << endl << "Time elapsed to prepare FFTW3 Execution Plan: " << (float) (clock() - fftw3_start_time) / CLOCKS_PER_SEC << " seconds " << endl;
+    FastFourierTransform fftw3Transformer(input_signal.size());
+
+    cout << "FFTW Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+
+    clock_t execution_time = clock();
 
     // In this test, we don't care about transformation result
     fftw3Transformer.DirectTransform(input_signal);
 
-    cout << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - fftw3_start_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    /*cout << endl << "FFTW OUTPUT" << endl;
+    for (int i = 0; i < input_signal.size(); i++) {
+        cout << output[i].real() << "\t" << output[i].imag() << endl;
+    }*/
+
+    cout << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
+}
+
+vector<complex<double> > PrepareTestSignal(size_t signal_size) {
+    vector<complex<double> > input_signal(signal_size);
+    for (size_t index = 0; index < signal_size; index++) {
+        input_signal[index].real(index);
+        input_signal[index].imag(0);
+    }
+    /*for (int i = 0; i < signal_size; i++) {
+        cout << input_signal[i].real() << "\t" << input_signal[i].imag() << endl;
+    }*/
+    return input_signal;
+}
+
+int main(int argc, char* argv[])
+{
+    srand(time(NULL));
+
+    int signal_size = 16384;
+    for (int test_number = 1; test_number <= 10; test_number++) {
+        vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
+        cout << endl << "TEST #" << test_number << endl;
+        cout << endl << "Test signal size is: " << signal_size << endl;
+        CUFFTPerformanceTest(input_signal);
+        cout << "---------------------------------------------" << endl << endl;
+        FFTWPerformanceTest(input_signal);
+        cout << "===============================================================================" << endl << endl;
+        signal_size *= 2;
+    }
 }

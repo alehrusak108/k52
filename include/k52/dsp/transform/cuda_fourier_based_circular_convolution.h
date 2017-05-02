@@ -17,7 +17,7 @@ class CudaFourierBasedCircularConvolution : public ICircularConvolution
 
 public:
 
-    CudaFourierBasedCircularConvolution(size_t sequence_size, int batch_size);
+    CudaFourierBasedCircularConvolution(size_t sequence_size, int executions_planned);
 
     std::vector<std::complex<double> > EvaluateConvolution(
             const std::vector<std::complex<double> > &first_sequence,
@@ -26,10 +26,6 @@ public:
 
 private:
 
-    // Can't use there reference to an IFourierTransform interface
-    // because it was designed as it can only perform Direct FFT
-    // and we need to reuse CUFFT Execution Plan which is defined
-    // only in CudaFastFourierTransform
     boost::shared_ptr<CudaFastFourierTransform> cufft_transformer_;
 };
 

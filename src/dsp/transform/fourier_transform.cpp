@@ -22,11 +22,16 @@ vector< complex< double > > FourierTransform::DirectTransform(const vector<compl
 
         for (size_t n = 0; n < N; ++n)
         {
-            result[k] += sequence[n] * exp( -2 * Constants::Pi * Constants::ImaginaryUnit *(double) k * (double)n /(double) N);
+            result[k] += sequence[n] * exp( -2 * Constants::Pi * Constants::ImaginaryUnit * (double) k * (double)n / (double) N);
         }
     }
 
     return result;
+}
+
+vector<complex<double> > FourierTransform::InverseTransform(const vector<complex<double> > &sequence) const {
+    // TODO: Stubbed. Implementation needed.
+    return vector<complex<double> >();
 }
 
 } // namespace dsp

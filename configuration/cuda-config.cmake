@@ -26,7 +26,6 @@ if(NOT CUDA_FOUND)
 endif()
 
 # NVCC Compiler additional flags
-# list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_10,code=sm_10) - deprecated
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_11,code=sm_11)
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_12,code=sm_12)
 list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_20,code=sm_20)

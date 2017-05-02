@@ -23,7 +23,6 @@ public:
 
 private:
     IFourierTransform::shared_ptr fourier_transform_;
-    InverseFourierTransform inverse_fourier_transform_;
 };
 
 } // namespace dsp

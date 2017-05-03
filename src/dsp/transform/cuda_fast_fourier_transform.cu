@@ -49,7 +49,17 @@ public:
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
 
-        cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
+        /*int nGPUs = 2, whichGPUs[2] = {0, 1};
+        cufftCreate(&cufft_execution_plan_);
+        cufftXtSetGPUs(cufft_execution_plan_, nGPUs, whichGPUs);
+        cufftMakePlan1d(&cufft_execution_plan_, signal_size_, cufftType type, executions_planned_, size_t *workSize);
+*/
+
+        size_t work_size[1];
+        cufftCreate(&cufft_execution_plan_);
+        cufftResult plan_prepare_result = cufftMakePlan1d(cufft_execution_plan_, signal_size_, CUFFT_C2C, executions_planned_, work_size);
+
+        //cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
         std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 

@@ -11,7 +11,7 @@
 
 #endif
 
-#define CUFFT_EXECUTIONS_PLANNED 1
+#define CUFFT_EXECUTIONS_PLANNED 1000
 
 using namespace std;
 
@@ -68,8 +68,8 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {
     vector<complex<double> > input_signal(signal_size);
     for (size_t index = 0; index < signal_size; index++) {
-        input_signal[index].real(index);
-        input_signal[index].imag(0);
+        input_signal[index].real(-5 + rand() % 15);
+        input_signal[index].imag(-5 + rand() % 15);
     }
     /*for (int i = 0; i < signal_size; i++) {
         cout << input_signal[i].real() << "\t" << input_signal[i].imag() << endl;
@@ -81,15 +81,15 @@ int main(int argc, char* argv[])
 {
     srand(time(NULL));
 
-    int signal_size = 16384;
-    for (int test_number = 1; test_number <= 10; test_number++) {
+    int signal_size = 10000000;
+    //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-        cout << endl << "TEST #" << test_number << endl;
+        //cout << endl << "TEST #" << test_number << endl;
         cout << endl << "Test signal size is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
         cout << "---------------------------------------------" << endl << endl;
         FFTWPerformanceTest(input_signal);
         cout << "===============================================================================" << endl << endl;
         signal_size *= 2;
-    }
+    //}
 }

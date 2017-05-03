@@ -56,7 +56,7 @@ public:
 */
 
         size_t work_size[1];
-        cufftCreate(&cufft_execution_plan_);
+        //cufftCreate(&cufft_execution_plan_);
 
         int dimensions = 1; // 1D FFTs
         int ranks_array[] = { signal_size_ }; // Sizes of arrays of each dimension
@@ -68,15 +68,14 @@ public:
         int onembed[] = { 0 }; // Output size with pitch (ignored for 1D transforms)
 
         // Single-Dimensional FFT execution plan configuration
-        cufftResult plan_prepare_result = cufftMakePlanMany(
-                cufft_execution_plan_,
+        cufftResult plan_prepare_result = cufftPlanMany(
+                &cufft_execution_plan_,
                 dimensions,
                 ranks_array,
                 inembed, istride, idist,
                 onembed, ostride, odist,
                 CUFFT_C2C,
-                executions_planned_,
-                work_size
+                executions_planned_
         );
 
         //cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);

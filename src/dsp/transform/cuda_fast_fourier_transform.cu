@@ -57,7 +57,27 @@ public:
 
         size_t work_size[1];
         cufftCreate(&cufft_execution_plan_);
-        cufftResult plan_prepare_result = cufftMakePlan1d(cufft_execution_plan_, signal_size_, CUFFT_C2C, executions_planned_, work_size);
+
+        int dimensions = 1; // 1D FFTs
+        int ranks_array[] = { signal_size_ }; // Sizes of arrays of each dimension
+        int istride = executions_planned_; // Distance between two successive input elements
+        int ostride = executions_planned_; // Same for the output elements
+        int idist = 1; // Distance between batches
+        int odist = 1; // Same for the output elements
+        int inembed[] = { 0 }; // Input size with pitch (ignored for 1D transforms)
+        int onembed[] = { 0 }; // Output size with pitch (ignored for 1D transforms)
+
+        // Single-Dimensional FFT execution plan configuration
+        cufftResult plan_prepare_result = cufftMakePlanMany(
+                cufft_execution_plan_,
+                dimensions,
+                ranks_array,
+                inembed, istride, idist,
+                onembed, ostride, odist,
+                CUFFT_C2C,
+                executions_planned_,
+                work_size
+        );
 
         //cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
         std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;

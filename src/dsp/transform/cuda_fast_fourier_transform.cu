@@ -64,8 +64,8 @@ public:
         int ostride = 1; // Same for the output elements
         int idist = 1; // Distance between batches
         int odist = 1; // Same for the output elements
-        int inembed[] = { 0 }; // Input size with pitch (ignored for 1D transforms)
-        int onembed[] = { 0 }; // Output size with pitch (ignored for 1D transforms)
+        int *inembed = NULL; // Input size with pitch (ignored for 1D transforms)
+        int *onembed = NULL; // Output size with pitch (ignored for 1D transforms)
 
         // Single-Dimensional FFT execution plan configuration
         cufftResult plan_prepare_result = cufftMakePlanMany(

@@ -30,7 +30,7 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
     clock_t execution_time = clock();
 
     // In this test, we don't care about transformation result
-    cufftTransformer.DirectTransform(input_signal);
+    vector<complex<double> > output = cufftTransformer.DirectTransform(input_signal);
 
     cout << endl << "CUFFT OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {
@@ -54,7 +54,7 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
     clock_t execution_time = clock();
 
     // In this test, we don't care about transformation result
-    fftw3Transformer.DirectTransform(input_signal);
+    vector<complex<double> > output = fftw3Transformer.DirectTransform(input_signal);
 
     cout << endl << "FFTW OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {

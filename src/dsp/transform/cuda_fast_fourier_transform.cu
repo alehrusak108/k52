@@ -54,6 +54,10 @@ public:
         cudaGetDeviceCount(&gpu_count);
         int *gpu_array = GetAvailableGPUArray(gpu_count > 2 ? 2 : gpu_count);
 
+        for (int i = 0; i < gpu_count; i++) {
+            std::cout << gpu_array[i] << " " << std::endl;
+        }
+
         cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_count);
         cufftCreate(&cufft_execution_plan_);
         cufftXtSetGPUs(cufft_execution_plan_, gpu_count, gpu_array);

@@ -60,7 +60,8 @@ public:
 
         cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_count);
         cufftCreate(&cufft_execution_plan_);
-        cufftXtSetGPUs(cufft_execution_plan_, gpu_count, gpu_array);
+        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, gpu_count, gpu_array);
+        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
         cufftResult plan_prepare_result = cufftMakePlan1d(
                 cufft_execution_plan_,
                 signal_size_,

@@ -38,8 +38,8 @@ class CudaFastFourierTransform::CudaFastFourierTransformImpl
 {
 
 public:
-    CudaFastFourierTransformImpl(size_t sequence_size, int executions_planned)
-            : signal_size_(sequence_size), executions_planned_(executions_planned) {
+    CudaFastFourierTransformImpl(size_t sequence_size, int transforms_count)
+            : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -49,15 +49,21 @@ public:
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
 
-        /*int nGPUs = 2, whichGPUs[2] = {0, 1};
-        cufftCreate(&cufft_execution_plan_);
-        cufftXtSetGPUs(cufft_execution_plan_, nGPUs, whichGPUs);
-        cufftMakePlan1d(&cufft_execution_plan_, signal_size_, cufftType type, executions_planned_, size_t *workSize);
-*/
+        // Use only 2 GPUs if even more available
+        int gpu_count;
+        cudaGetDeviceCount(&gpu_count);
+        int *gpu_array = GetAvailableGPUArray(gpu_count > 2 ? 2 : gpu_count);
 
-        size_t work_size;
+        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_count);
         cufftCreate(&cufft_execution_plan_);
-        cufftResult plan_prepare_result = cufftMakePlan1d(cufft_execution_plan_, signal_size_, CUFFT_C2C, executions_planned_, &work_size);
+        cufftXtSetGPUs(cufft_execution_plan_, gpu_count, gpu_array);
+        cufftResult plan_prepare_result = cufftMakePlan1d(
+                cufft_execution_plan_,
+                signal_size_,
+                CUFFT_C2C,
+                transforms_count_,
+                cufft_work_size_
+        );
         std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 
@@ -68,6 +74,8 @@ public:
         // Destroy CUFFT Execution Plan
         cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
         std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
+
+        free(cufft_work_size_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
     }
@@ -93,25 +101,30 @@ public:
         cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
 
         // Copy sequence data memory to device
-        cufftComplex *device_signal;
+        /*cufftComplex *device_signal;
         cudaMalloc((void**) &device_signal, signal_memory_size_);
-        cudaMemcpy(device_signal, host_signal, signal_memory_size_, cudaMemcpyHostToDevice);
+        cudaMemcpy(device_signal, host_signal, signal_memory_size_, cudaMemcpyHostToDevice);*/
+        cudaLibXtDesc *device_signal;
+        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
+        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+
         std::cout << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
-        cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, device_signal, device_signal, transform_direction);
-        std::cout << std::endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl << std::endl;
-        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl << std::endl;
+        cufftResult execution_result =
+                cufftXtExecDescriptorC2C(cufft_execution_plan_, device_signal, device_signal, CUFFT_FORWARD);
+        //cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, device_signal, device_signal, transform_direction);
+        std::cout << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
 
         // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
-        cufftComplex *host_result = (cufftComplex *) malloc(signal_memory_size_);
-        cudaMemcpy(host_result, device_signal, signal_memory_size_, cudaMemcpyDeviceToHost);
+        cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
 
-        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_result, signal_size_);
+        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_signal, signal_size_);
 
-        cudaFree(device_signal);
-        cudaFree(host_result);
+        cufftXtFree(device_signal);
+        cudaFree(host_signal);
 
         return result_vector;
     }
@@ -123,10 +136,20 @@ private:
 
     // instance fields and initializers
     size_t signal_size_;
-    int executions_planned_;
+    int transforms_count_;
     int signal_memory_size_;
 
+    size_t *cufft_work_size_;
     cufftHandle cufft_execution_plan_;
+
+    int* GetAvailableGPUArray(int gpu_count) {
+        int *gpu_array = (int*) malloc(sizeof(int) * gpu_count);
+        for (unsigned int index = 0; index < gpu_count; index++)
+        {
+            gpu_array[index] = index;
+        }
+        return gpu_array;
+    }
 };
 
 boost::mutex CudaFastFourierTransform::CudaFastFourierTransformImpl::cuda_mutex_;

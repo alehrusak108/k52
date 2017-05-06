@@ -55,31 +55,9 @@ public:
         cufftMakePlan1d(&cufft_execution_plan_, signal_size_, cufftType type, executions_planned_, size_t *workSize);
 */
 
-        size_t work_size[1];
+        size_t work_size;
         cufftCreate(&cufft_execution_plan_);
-
-        int dimensions = 1; // 1D FFTs
-        int ranks_array[] = { signal_size_ }; // Sizes of arrays of each dimension
-        int istride = 1; // Distance between two successive input elements
-        int ostride = 1; // Same for the output elements
-        int idist = 1; // Distance between batches
-        int odist = 1; // Same for the output elements
-        int *inembed = NULL; // Input size with pitch (ignored for 1D transforms)
-        int *onembed = NULL; // Output size with pitch (ignored for 1D transforms)
-
-        // Single-Dimensional FFT execution plan configuration
-        cufftResult plan_prepare_result = cufftMakePlanMany(
-                cufft_execution_plan_,
-                dimensions,
-                ranks_array,
-                inembed, istride, idist,
-                onembed, ostride, odist,
-                CUFFT_C2C,
-                executions_planned_,
-                work_size
-        );
-
-        //cufftResult plan_prepare_result = cufftPlan1d(&cufft_execution_plan_, signal_size_, CUFFT_C2C, 1);
+        cufftResult plan_prepare_result = cufftMakePlan1d(cufft_execution_plan_, signal_size_, CUFFT_C2C, executions_planned_, &work_size);
         std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 
@@ -89,7 +67,7 @@ public:
 
         // Destroy CUFFT Execution Plan
         cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
-        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl;
+        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
     }
@@ -121,8 +99,10 @@ public:
         std::cout << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        clock_t execution_time = clock();
         cufftResult execution_result = cufftExecC2C(cufft_execution_plan_, device_signal, device_signal, transform_direction);
-        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
+        std::cout << std::endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl << std::endl;
+        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl << std::endl;
 
         // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
         cufftComplex *host_result = (cufftComplex *) malloc(signal_memory_size_);

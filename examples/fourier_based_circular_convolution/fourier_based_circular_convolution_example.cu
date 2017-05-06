@@ -11,7 +11,7 @@
 
 #endif
 
-#define CUFFT_EXECUTIONS_PLANNED 1000
+#define CUFFT_EXECUTIONS_PLANNED 1
 
 using namespace std;
 

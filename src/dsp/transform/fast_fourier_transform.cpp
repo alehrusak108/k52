@@ -64,7 +64,9 @@ public:
         }
 
         // Actual computations
+        //clock_t execution_time = clock();
         fftw_execute(plan_);
+        //std::cout << std::endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl << std::endl;
 
         vector< complex< double > > result(signal_size_);
         for (size_t n = 0; n < signal_size_; ++n)

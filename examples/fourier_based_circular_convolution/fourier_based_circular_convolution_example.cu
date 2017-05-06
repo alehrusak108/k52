@@ -32,10 +32,10 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
     // In this test, we don't care about transformation result
     vector<complex<double> > output = cufftTransformer.DirectTransform(input_signal);
 
-    cout << endl << "CUFFT OUTPUT" << endl;
+    /*cout << endl << "CUFFT OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
-    }
+    }*/
 
     cout << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
@@ -56,10 +56,10 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
     // In this test, we don't care about transformation result
     vector<complex<double> > output = fftw3Transformer.DirectTransform(input_signal);
 
-    cout << endl << "FFTW OUTPUT" << endl;
+    /*cout << endl << "FFTW OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
-    }
+    }*/
 
     cout << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 {
     srand(time(NULL));
 
-    int signal_size = 128;
+    int signal_size = 16777216;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
         //cout << endl << "TEST #" << test_number << endl;

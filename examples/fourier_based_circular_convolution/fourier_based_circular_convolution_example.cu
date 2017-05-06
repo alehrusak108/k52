@@ -32,10 +32,10 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
     // In this test, we don't care about transformation result
     cufftTransformer.DirectTransform(input_signal);
 
-    /*cout << endl << "CUFFT OUTPUT" << endl;
+    cout << endl << "CUFFT OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
-    }*/
+    }
 
     cout << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
@@ -49,17 +49,17 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     FastFourierTransform fftw3Transformer(input_signal.size());
 
-    cout << "FFTW Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    cout << endl << "FFTW Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
 
     // In this test, we don't care about transformation result
     fftw3Transformer.DirectTransform(input_signal);
 
-    /*cout << endl << "FFTW OUTPUT" << endl;
+    cout << endl << "FFTW OUTPUT" << endl;
     for (int i = 0; i < input_signal.size(); i++) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
-    }*/
+    }
 
     cout << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     cout << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
@@ -68,12 +68,14 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {
     vector<complex<double> > input_signal(signal_size);
     for (size_t index = 0; index < signal_size; index++) {
-        input_signal[index].real(-5 + rand() % 15);
-        input_signal[index].imag(-5 + rand() % 15);
+        input_signal[index].real(index);
+        input_signal[index].imag(0);
+        //input_signal[index].real(-5 + rand() % 15);
+        //input_signal[index].imag(-5 + rand() % 15);
     }
-    /*for (int i = 0; i < signal_size; i++) {
+    for (int i = 0; i < signal_size; i++) {
         cout << input_signal[i].real() << "\t" << input_signal[i].imag() << endl;
-    }*/
+    }
     return input_signal;
 }
 
@@ -81,7 +83,7 @@ int main(int argc, char* argv[])
 {
     srand(time(NULL));
 
-    int signal_size = 1048576;
+    int signal_size = 16;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
         //cout << endl << "TEST #" << test_number << endl;

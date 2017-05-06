@@ -66,7 +66,7 @@ public:
         // Actual computations
         clock_t execution_time = clock();
         fftw_execute(plan_);
-        std::cout << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl << std::endl;
+        std::cout << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
 
         vector< complex< double > > result(signal_size_);
         for (size_t n = 0; n < signal_size_; ++n)

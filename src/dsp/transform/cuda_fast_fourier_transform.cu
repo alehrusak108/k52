@@ -116,7 +116,7 @@ public:
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
-        test_output << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
+        test_output << std::endl << "CUFFT Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();

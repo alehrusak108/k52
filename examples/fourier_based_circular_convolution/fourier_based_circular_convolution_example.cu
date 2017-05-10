@@ -91,15 +91,15 @@ int main(int argc, char* argv[])
     srand(time(NULL));
     ofstream test_output;
     test_output.open("test_output.txt", ios::out | ios::app);
-    int signal_size = 131072;
-    //for (int test_number = 1; test_number <= 10; test_number++) {
+    int signal_size = 262144;
+    for (int test_number = 1; test_number <= 8; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-        //test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
+        test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
         test_output << "---------------------------------------------" << endl << endl;
         FFTWPerformanceTest(input_signal);
         test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;
-    //}
+    }
     test_output.close();
 }

@@ -49,7 +49,7 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     FastFourierTransform fftw3Transformer(input_signal.size());
 
-    cout << endl << "FFTW Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    cout << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
 

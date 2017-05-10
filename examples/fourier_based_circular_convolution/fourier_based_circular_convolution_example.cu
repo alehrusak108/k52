@@ -21,18 +21,14 @@ using namespace k52::dsp;
 void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 
     ofstream test_output;
-    test_output.open("test_output.txt");
+    test_output.open("test_output.txt", ios::out | ios::app);
     test_output << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
     clock_t planning_time = clock();
 
-    test_output.close();
-
     CudaFastFourierTransform cufftTransformer(input_signal.size(), CUFFT_EXECUTIONS_PLANNED);
 
-    test_output.open("test_output.txt");
     test_output << "CUFFT Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
-    test_output.close();
 
     clock_t execution_time = clock();
 
@@ -44,7 +40,6 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
     }*/
 
-    test_output.open("test_output.txt");
     test_output << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
@@ -53,18 +48,14 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     ofstream test_output;
-    test_output.open("test_output.txt");
+    test_output.open("test_output.txt", ios::out | ios::app);
     test_output << "[ FFTW3 Performance TEST ] STARTED." << endl;
 
     clock_t planning_time = clock();
 
-    test_output.close();
-
     FastFourierTransform fftw3Transformer(input_signal.size());
 
-    test_output.open("test_output.txt");
     test_output << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
-    test_output.close();
 
     clock_t execution_time = clock();
 
@@ -76,7 +67,6 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
     }*/
 
-    test_output.open("test_output.txt");
     test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
@@ -100,7 +90,7 @@ int main(int argc, char* argv[])
 {
     srand(time(NULL));
     ofstream test_output;
-    test_output.open("test_output.txt");
+    test_output.open("test_output.txt", ios::out | ios::app);
     int signal_size = 131072;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);

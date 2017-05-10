@@ -43,7 +43,7 @@ public:
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
         std::ofstream test_output;
-        test_output.open("test_output.txt");
+        test_output.open("test_output.txt", std::ios::out | std::ios::app);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -76,12 +76,12 @@ public:
     ~CudaFastFourierTransformImpl() {
 
         std::ofstream test_output;
-        test_output.open("test_output.txt");
+        test_output.open("test_output.txt", std::ios::out | std::ios::app);
         test_output << "Destroying CUFFT Context..." << std::endl;
 
         // Destroy CUFFT Execution Plan
         cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
-        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
+        test_output << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
 
         free(cufft_work_size_);
 
@@ -103,7 +103,7 @@ public:
     {
 
         std::ofstream test_output;
-        test_output.open("test_output.txt");
+        test_output.open("test_output.txt", std::ios::out | std::ios::app);
         
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(

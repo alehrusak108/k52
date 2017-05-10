@@ -5,6 +5,7 @@
 
 #include <fftw3.h>
 #include <boost/thread/mutex.hpp>
+#include <fstream>
 
 #endif
 
@@ -64,9 +65,12 @@ public:
         }
 
         // Actual computations
+        std::ofstream test_output;
+        test_output.open("test_output.txt");
         clock_t execution_time = clock();
         fftw_execute(plan_);
-        std::cout << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        test_output << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        test_output.close();
 
         vector< complex< double > > result(signal_size_);
         for (size_t n = 0; n < signal_size_; ++n)

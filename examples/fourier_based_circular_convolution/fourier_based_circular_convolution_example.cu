@@ -4,6 +4,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <vector>
+#include <fstream>
 
 #ifdef BUILD_WITH_CUDA
 
@@ -19,13 +20,19 @@ using namespace k52::dsp;
 
 void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 
-    cout << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
+    ofstream test_output;
+    test_output.open("test_output.txt");
+    test_output << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
     clock_t planning_time = clock();
 
+    test_output.close();
+
     CudaFastFourierTransform cufftTransformer(input_signal.size(), CUFFT_EXECUTIONS_PLANNED);
 
-    cout << "CUFFT Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    test_output.open("test_output.txt");
+    test_output << "CUFFT Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    test_output.close();
 
     clock_t execution_time = clock();
 
@@ -37,19 +44,27 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
     }*/
 
-    cout << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
-    cout << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
+    test_output.open("test_output.txt");
+    test_output << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    test_output << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
+    test_output.close();
 }
 
 void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
-    cout << "[ FFTW3 Performance TEST ] STARTED." << endl;
+    ofstream test_output;
+    test_output.open("test_output.txt");
+    test_output << "[ FFTW3 Performance TEST ] STARTED." << endl;
 
     clock_t planning_time = clock();
 
+    test_output.close();
+
     FastFourierTransform fftw3Transformer(input_signal.size());
 
-    cout << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    test_output.open("test_output.txt");
+    test_output << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
+    test_output.close();
 
     clock_t execution_time = clock();
 
@@ -61,8 +76,10 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
     }*/
 
-    cout << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
-    cout << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
+    test_output.open("test_output.txt");
+    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    test_output << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
+    test_output.close();
 }
 
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {
@@ -82,16 +99,17 @@ vector<complex<double> > PrepareTestSignal(size_t signal_size) {
 int main(int argc, char* argv[])
 {
     srand(time(NULL));
-
-    //int signal_size = 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912;
-    int signal_size = 67108864;
+    ofstream test_output;
+    test_output.open("test_output.txt");
+    int signal_size = 131072;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-        //cout << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
+        //test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
-        cout << "---------------------------------------------" << endl << endl;
+        test_output << "---------------------------------------------" << endl << endl;
         FFTWPerformanceTest(input_signal);
-        cout << "===============================================================================" << endl << endl;
+        test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;
     //}
+    test_output.close();
 }

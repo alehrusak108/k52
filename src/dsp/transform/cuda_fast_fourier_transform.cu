@@ -1,6 +1,7 @@
 #include <k52/dsp/transform/cuda_fast_fourier_transform.h>
 #include <k52/dsp/transform/util/cuda_utils.h>
 #include <cstdio>
+#include <fstream>
 #include <stdexcept>
 
 #ifdef BUILD_WITH_CUDA
@@ -41,6 +42,9 @@ public:
     CudaFastFourierTransformImpl(size_t sequence_size, int transforms_count)
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
+        std::ofstream test_output;
+        test_output.open("test_output.txt");
+
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
         if (sequence_size <= 0) {
@@ -58,7 +62,7 @@ public:
         cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
         cufftCreate(&cufft_execution_plan_);
         cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
-        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
+        test_output << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
         cufftResult plan_prepare_result = cufftMakePlan1d(
                 cufft_execution_plan_,
                 signal_size_,
@@ -66,12 +70,14 @@ public:
                 transforms_count_,
                 cufft_work_size_
         );
-        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+        test_output << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 
     ~CudaFastFourierTransformImpl() {
 
-        std::cout << "Destroying CUFFT Context..." << std::endl;
+        std::ofstream test_output;
+        test_output.open("test_output.txt");
+        test_output << "Destroying CUFFT Context..." << std::endl;
 
         // Destroy CUFFT Execution Plan
         cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
@@ -80,6 +86,7 @@ public:
         free(cufft_work_size_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
+        test_output.close();
     }
 
     vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)
@@ -95,6 +102,9 @@ public:
     vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction) const
     {
 
+        std::ofstream test_output;
+        test_output.open("test_output.txt");
+        
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(
                     "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
@@ -106,7 +116,7 @@ public:
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
-        std::cout << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
+        test_output << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
@@ -116,8 +126,8 @@ public:
                 device_signal,
                 CUFFT_FORWARD
         );
-        std::cout << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        std::cout << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
+        test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
 
         // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
         cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
@@ -127,6 +137,7 @@ public:
         cufftXtFree(device_signal);
         cudaFree(host_signal);
 
+        test_output.close();
         return result_vector;
     }
 

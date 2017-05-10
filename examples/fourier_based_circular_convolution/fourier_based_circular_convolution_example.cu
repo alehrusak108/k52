@@ -83,11 +83,10 @@ int main(int argc, char* argv[])
 {
     srand(time(NULL));
 
-    int signal_size = 16777216;
+    int signal_size = 33554432;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-        //cout << endl << "TEST #" << test_number << endl;
-        cout << endl << "Test signal size is: " << signal_size << endl;
+        //cout << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
         cout << "---------------------------------------------" << endl << endl;
         FFTWPerformanceTest(input_signal);

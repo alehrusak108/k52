@@ -103,7 +103,7 @@ public:
         cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
 
         cudaLibXtDesc *device_signal;
-        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_1D_INPUT_SHUFFLED);
+        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE_SHUFFLED);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
         std::cout << std::endl << "Signal memory allocated: " << signal_memory_size_ << " bytes." << std::endl;

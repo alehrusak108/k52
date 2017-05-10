@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     srand(time(NULL));
 
     //int signal_size = 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912;
-    int signal_size = 134217728;
+    int signal_size = 67108864;
     //for (int test_number = 1; test_number <= 10; test_number++) {
         vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
         //cout << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;

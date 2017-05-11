@@ -62,7 +62,9 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // Create one signal based on input signals to pass it through
     // Two GPUs via cudaLibXt, assuming, that signals are of the same size
     // And sum of sizes is multiplied by 2.
-    vector<complex<double> > sum_signal(signal_size * 2);
+    vector<complex<double> > sum_signal;
+
+    sum_signal.reserve(signal_size * 2);
     copy(first_signal.begin(), first_signal.end(), back_inserter(sum_signal));
     copy(second_signal.begin(), second_signal.end(), back_inserter(sum_signal));
 
@@ -87,7 +89,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // Copy FFT-results from GPU_1 to GPU_0
     // To calculate multiplication in parallel on one device
     cufftComplex *gpu0_result_from_gpu1;
-    cudaMalloc((void**) gpu0_result_from_gpu1, signal_memory_size);
+    cudaMalloc((void**) &gpu0_result_from_gpu1, signal_memory_size);
     cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_memory_size, cudaMemcpyDeviceToDevice);
 
     cudaSetDevice(0);

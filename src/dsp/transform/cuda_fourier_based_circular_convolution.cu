@@ -66,6 +66,11 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     copy(first_signal.begin(), first_signal.end(), back_inserter(sum_signal));
     copy(second_signal.begin(), second_signal.end(), back_inserter(sum_signal));
 
+    std::cout << "CONCAT SIGNAL: " << sum_signal.size() << std::endl;
+    for (int i = 0; i < sum_signal.size(); i++) {
+        std::cout << sum_signal[i].real() << "\t" << sum_signal[i].imag() << std::endl;
+    }
+
     // Here are used additional CudaFastFourierTransform methods
     // to prevent from useless copying cufftComplex arrays into vector
     cudaLibXtDesc *sum_signal_transform =

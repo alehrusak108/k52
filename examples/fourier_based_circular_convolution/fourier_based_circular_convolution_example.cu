@@ -18,7 +18,7 @@ using namespace std;
 
 using namespace k52::dsp;
 
-void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
+double CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 
     ofstream test_output;
     test_output.open("test_output.txt", ios::out | ios::app);
@@ -40,12 +40,14 @@ void CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
     }*/
 
-    test_output << endl << "Time elapsed for CUFFT Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    clock_t finish = (float) (clock() - execution_time);
+    test_output << endl << "Time elapsed for CUFFT Transform Test: " << finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
+    return finish / CLOCKS_PER_SEC;
 }
 
-void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
+double FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     ofstream test_output;
     test_output.open("test_output.txt", ios::out | ios::app);
@@ -67,9 +69,11 @@ void FFTWPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
     }*/
 
-    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    clock_t finish = (float) (clock() - execution_time);
+    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
+    return finish / CLOCKS_PER_SEC;
 }
 
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {
@@ -91,15 +95,24 @@ int main(int argc, char* argv[])
     srand(time(NULL));
     ofstream test_output;
     test_output.open("test_output.txt", ios::out | ios::app);
-    int signal_size = 262144;
-    for (int test_number = 1; test_number <= 8; test_number++) {
-        vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-        test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
-        CUFFTPerformanceTest(input_signal);
-        test_output << "---------------------------------------------" << endl << endl;
-        FFTWPerformanceTest(input_signal);
-        test_output << "===============================================================================" << endl << endl;
-        signal_size *= 2;
+    int signal_size = 33554432;
+    int window_size = 1024;
+    int windows_count = 33554432 / 1024;
+    vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
+    double cufft_summary = 0.0;
+    double fftw_summary = 0.0;
+    for (int index = 0; index < windows_count - 1; index++) {
+        vector<complex<double> >::const_iterator start = input_signal.begin() + index * window_size;
+        vector<complex<double> >::const_iterator end = input_signal.begin() + (index + 1) * window_size;
+        vector<complex<double> > window(start, end);
+        //test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
+        cufft_summary += CUFFTPerformanceTest(window);
+        //test_output << "---------------------------------------------" << endl << endl;
+        fftw_summary += FFTWPerformanceTest(window);
+        //test_output << "===============================================================================" << endl << endl;
+        //signal_size *= 2;
     }
+    test_output << endl << endl << "CUFFT SUMMARY TIME: " << cufft_summary << endl << endl;
+    test_output << endl << endl << "FFTW3 SUMMARY TIME: " << fftw_summary << endl << endl;
     test_output.close();
 }

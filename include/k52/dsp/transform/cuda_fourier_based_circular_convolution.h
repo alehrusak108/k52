@@ -26,6 +26,9 @@ public:
 
 private:
 
+    // Here used implementation instead of an interface,
+    // because CudaFastFourierTransform provides
+    // two more methods to perform FFT, that are very useful for convolution
     boost::shared_ptr<CudaFastFourierTransform> cufft_transformer_;
 };
 

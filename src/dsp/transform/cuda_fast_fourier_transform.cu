@@ -104,7 +104,7 @@ public:
 
         std::ofstream test_output;
         test_output.open("test_output.txt", std::ios::out | std::ios::app);
-        
+
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(
                     "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
@@ -124,12 +124,12 @@ public:
                 cufft_execution_plan_,
                 device_signal,
                 device_signal,
-                CUFFT_FORWARD
+                transform_direction
         );
         test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
         test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
 
-        // Copy Device memory (FFT calculation results - d_signal_output_) to Host memory (RAM)
+        // Copy Device memory (FFT calculation results - device_signal) to Host memory (RAM)
         cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
 
         vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_signal, signal_size_);
@@ -138,6 +138,54 @@ public:
         cudaFree(host_signal);
 
         test_output.close();
+        return result_vector;
+    }
+
+    cudaLibXtDesc* DirectTransformMemoryDesc(const vector<complex<double> > &sequence) const
+    {
+        if (signal_size_ != sequence.size()) {
+            throw std::invalid_argument(
+                    "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
+        }
+
+        cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
+
+        cudaLibXtDesc *device_signal;
+        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
+        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+
+        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        cufftResult execution_result = cufftXtExecDescriptorC2C(
+                cufft_execution_plan_,
+                device_signal,
+                device_signal,
+                CUFFT_FORWARD
+        );
+
+        return device_signal;
+    }
+
+    vector<complex<double> > InverseTransformMemoryDesc(cufftComplex *host_signal, int signal_size) const
+    {
+        cudaLibXtDesc *device_signal;
+        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
+        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+
+        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        cufftResult execution_result = cufftXtExecDescriptorC2C(
+                cufft_execution_plan_,
+                device_signal,
+                device_signal,
+                CUFFT_INVERSE
+        );
+
+        cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+
+        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_signal, signal_size_);
+
+        cufftXtFree(device_signal);
+        cudaFree(host_signal);
+
         return result_vector;
     }
 
@@ -187,6 +235,18 @@ vector<complex<double> > CudaFastFourierTransform::InverseTransform(
         const vector<complex<double> > &sequence) const
 {
     return cuda_fast_fourier_transform_impl_->InverseTransform(sequence);
+}
+
+cudaLibXtDesc* CudaFastFourierTransform::DirectTransformMemoryDesc(
+        const vector<complex<double> > &sequence) const
+{
+    return cuda_fast_fourier_transform_impl_->DirectTransformMemoryDesc(sequence);
+}
+
+vector<complex<double> > CudaFastFourierTransform::InverseTransformMemoryDesc(
+        cufftComplex *host_signal, int signal_size) const
+{
+    return cuda_fast_fourier_transform_impl_->InverseTransformMemoryDesc(host_signal, signal_size);
 }
 
 #endif //BUILD_WITH_CUDA

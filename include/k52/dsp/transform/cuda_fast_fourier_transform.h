@@ -7,6 +7,7 @@
 
 #include <cufft.h>
 #include "../../../../../../../../usr/local/cuda/include/cufft.h"
+#include "../../../../../../../../usr/local/cuda/include/cudalibxt.h"
 
 #endif
 
@@ -38,6 +39,11 @@ public:
     virtual vector<complex<double> > InverseTransform(
             const vector<complex<double> > &sequence) const;
 
+    virtual cudaLibXtDesc* DirectTransformMemoryDesc(
+            const vector<complex<double> > &sequence) const;
+
+    virtual vector<complex<double> > InverseTransformMemoryDesc(
+            cufftComplex*, int) const;
 private:
 
     class CudaFastFourierTransformImpl;

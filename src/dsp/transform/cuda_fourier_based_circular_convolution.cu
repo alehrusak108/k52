@@ -2,9 +2,6 @@
 #include <cstdio>
 #include <stdexcept>
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "TemplateArgumentsIssues"
-
 #ifdef BUILD_WITH_CUDA
 
 #include <cuda.h>
@@ -27,20 +24,22 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 
 #ifdef BUILD_WITH_CUDA
 
-__global__ void MultiplySignals(const cufftComplex *first,
-                                const cufftComplex *second,
-                                cufftComplex *result,
+// CUDA kernel function used to multiply two signals in parallel
+// Result is written instead of first signal
+__global__ void MultiplySignals(cufftComplex *first,
+                                cufftComplex *second,
                                 int signal_size)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id < signal_size) {
+    if (thread_id < signal_size)
+    {
         // Elements of the result of signals multiplication are calculated in parallel
         // using thread_id variable - thread index.
         // Each thread calculates one element of result sequence at first[thread_id] moment.
         cufftComplex result_element;
         result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
         result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
-        result[thread_id] = result_element;
+        first[thread_id] = result_element;
     }
 }
 
@@ -60,31 +59,30 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     size_t signal_size = first_sequence.size();
 
-    vector<complex<double> > first_sequence_transform =
-            cufft_transformer_->DirectTransform(first_sequence);
-    vector<complex<double> > second_sequence_transform =
-            cufft_transformer_->DirectTransform(second_sequence);
+    // Here are used additional CudaFastFourierTransform methods
+    // to prevent from useless copying cufftComplex arrays into vector
+    cudaLibXtDesc *first_sequence_transform =
+            cufft_transformer_->DirectTransformMemoryDesc(first_sequence);
+    cudaLibXtDesc *second_sequence_transform =
+            cufft_transformer_->DirectTransformMemoryDesc(second_sequence);
 
     int signal_memory_size = sizeof(cufftComplex) * signal_size;
 
-    cufftComplex* d_first;
-    cudaMalloc((void**) &d_first, signal_memory_size);
-    cudaMemcpy(d_first, first_sequence_transform.data(), signal_memory_size, cudaMemcpyHostToDevice);
+    // Copy transformed signal from first device to zero one
+    // To multiply them on one device
+    cufftComplex *gpu1_transform = (cufftComplex*) (first_sequence_transform->descriptor->data[1]);
+    //cufftComplex *gpu0_transform = (cufftComplex*) (->descriptor->data[0]);
+    cudaSetDevice(0);
+    cufftComplex *gpu0_transform_from_gpu1;
+    cudaMalloc((void**) &gpu0_transform_from_gpu1, signal_memory_size);
 
-    cufftComplex* d_second;
-    cudaMalloc((void**) &d_second, signal_memory_size);
-    cudaMemcpy(d_second, second_sequence_transform.data(), signal_memory_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu0_transform_from_gpu1, gpu1_transform, signal_memory_size, cudaMemcpyDeviceToDevice);
 
-    cufftComplex* d_multiplication;
-    cudaMalloc((void**) &d_multiplication, signal_memory_size);
+    //MultiplySignals<<<64, 256>>>(gpu0_transform_from_gpu1, d_second, d_multiplication, signal_size);
 
-    MultiplySignals<<<64, 128>>>(d_first, d_second, d_multiplication, signal_size);
+    //vector<complex<double> > convolution = CudaUtils::CufftComplexToVector(d_multiplication, signal_size);
 
-    vector<complex<double> > convolution = CudaUtils::CufftComplexToVector(d_multiplication, signal_size);
-
-    return cufft_transformer_->InverseTransform(convolution);
+    return first_sequence;
 }
 
 #endif //BUILD_WITH_CUDA
-
-#pragma clang diagnostic pop

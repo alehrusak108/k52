@@ -160,7 +160,7 @@ public:
         std::cout << std::endl << "Copying memory from device to device... " << std::endl;
 
         cudaLibXtDesc *device_signal;
-        cufftResult malloc_result = cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE));
+        cufftResult malloc_result = cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         std::cout << std::endl << malloc_result << std::endl;
         cufftResult memcpy_result = cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE);
         std::cout << std::endl << memcpy_result << std::endl;

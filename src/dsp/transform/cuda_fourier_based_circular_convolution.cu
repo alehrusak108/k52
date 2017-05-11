@@ -82,8 +82,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cufftComplex *gpu0_result = (cufftComplex*) (result_descriptor->data[0]);
     cufftComplex *gpu1_result = (cufftComplex*) (result_descriptor->data[1]);
 
-    cufftXtFree(sum_signal_transform);
-
     // Copy FFT-results from GPU_1 to GPU_0
     // To calculate multiplication in parallel on one device
     cufftComplex *gpu0_result_from_gpu1;
@@ -97,6 +95,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
         std::cout << gpu0_result_from_gpu1[i].x << "\t" << gpu0_result_from_gpu1[i].y << std::endl;
     }
 
+    cufftXtFree(sum_signal_transform);
     cudaFree(gpu0_result);
 
     return cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);

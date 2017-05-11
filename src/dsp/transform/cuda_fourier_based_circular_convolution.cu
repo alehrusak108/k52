@@ -40,7 +40,8 @@ __global__ void MultiplySignals(cufftComplex *first,
         cufftComplex result_element;
         result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
         result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
-        first[thread_id] = result_element;
+        first[thread_id].x = result_element.x;
+        first[thread_id].y = result_element.y;
     }
 }
 

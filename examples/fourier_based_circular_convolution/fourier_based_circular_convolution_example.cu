@@ -40,11 +40,11 @@ double CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t\t" << output[i].imag() << endl;
     }*/
 
-    clock_t finish = (float) (clock() - execution_time);
-    test_output << endl << "Time elapsed for CUFFT Transform Test: " << finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    clock_t finish = clock() - execution_time;
+    test_output << endl << "Time elapsed for CUFFT Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
-    return finish / CLOCKS_PER_SEC;
+    return (double) finish / CLOCKS_PER_SEC;
 }
 
 double FFTWPerformanceTest(vector<complex<double> > &input_signal) {
@@ -69,11 +69,11 @@ double FFTWPerformanceTest(vector<complex<double> > &input_signal) {
         cout << output[i].real() << "\t" << output[i].imag() << endl;
     }*/
 
-    clock_t finish = (float) (clock() - execution_time);
-    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    clock_t finish = clock() - execution_time;
+    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
-    return finish / CLOCKS_PER_SEC;
+    return (double) finish / CLOCKS_PER_SEC;
 }
 
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {

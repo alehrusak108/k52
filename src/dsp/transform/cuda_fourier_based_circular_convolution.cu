@@ -96,7 +96,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     }
 
     cufftXtFree(sum_signal_transform);
-    cudaFree(gpu0_result);
 
     return cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);
 }

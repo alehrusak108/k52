@@ -92,8 +92,12 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     std::cout << error << std::endl;
     MultiplySignals<<<32, 256>>>(gpu0_result_from_gpu1, gpu0_result, signal_size);
 
+    cufftComplex *out = (cufftComplex *) malloc(sizeof(cufftComplex) * signal_size);
+    error = cudaMemcpy(out, gpu0_result_from_gpu1, signal_size, cudaMemcpyDeviceToHost);
+    std::cout << error << std::endl;
+
     for (int i = 0; i < signal_size; i++) {
-        std::cout << gpu0_result_from_gpu1[i].x << "\t" << gpu0_result_from_gpu1[i].y << std::endl;
+        std::cout << out[i].x << "\t" << out[i].y << std::endl;
     }
 
     vector<complex<double> > convolution =

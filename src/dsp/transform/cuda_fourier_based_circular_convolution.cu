@@ -74,8 +74,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cudaLibXtDesc *sum_signal_transform =
             cufft_transformer_->DirectTransformLibXtDesc(sum_signal);
 
-    int signal_memory_size = sizeof(cufftComplex) * signal_size;
-
     cudaXtDesc *result_descriptor = sum_signal_transform->descriptor;
 
     // Get FFT-results from each GPU
@@ -85,9 +83,9 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // Copy FFT-results from GPU_1 to GPU_0
     // To calculate multiplication in parallel on one device
     cufftComplex *gpu0_result_from_gpu1;
-    cudaError error = cudaMalloc((void**) &gpu0_result_from_gpu1, signal_memory_size);
+    cudaError error = cudaMalloc((void**) &gpu0_result_from_gpu1, sizeof(cufftComplex) * signal_size);
     std::cout << error << std::endl;
-    error = cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_memory_size, cudaMemcpyDeviceToDevice);
+    error = cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_size, cudaMemcpyDeviceToDevice);
     std::cout << error << std::endl;
 
     cudaSetDevice(0);

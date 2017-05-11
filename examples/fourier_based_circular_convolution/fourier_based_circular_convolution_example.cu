@@ -93,7 +93,7 @@ vector<complex<double> > PrepareTestSignal(size_t signal_size)
         /*input_signal[index].real(-5 + rand() % 15);
         input_signal[index].imag(-5 + rand() % 15);*/
     }
-    printComplexVector(input_signal);
+    //printComplexVector(input_signal);
     return input_signal;
 }
 

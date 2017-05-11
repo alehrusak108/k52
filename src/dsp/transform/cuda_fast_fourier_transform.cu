@@ -42,8 +42,8 @@ public:
     CudaFastFourierTransformImpl(size_t sequence_size, int transforms_count)
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
-        std::ofstream test_output;
-        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
+        std::ofstream std::cout;
+        std::cout.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -62,7 +62,7 @@ public:
         cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
         cufftCreate(&cufft_execution_plan_);
         cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
-        test_output << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
+        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
         cufftResult plan_prepare_result = cufftMakePlan1d(
                 cufft_execution_plan_,
                 signal_size_,
@@ -70,23 +70,23 @@ public:
                 transforms_count_,
                 cufft_work_size_
         );
-        test_output << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 
     ~CudaFastFourierTransformImpl() {
 
-        std::ofstream test_output;
-        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
-        test_output << "Destroying CUFFT Context..." << std::endl;
+        std::ofstream std::cout;
+        std::cout.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
+        std::cout << "Destroying CUFFT Context..." << std::endl;
 
         // Destroy CUFFT Execution Plan
         cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
-        test_output << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
+        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
 
         free(cufft_work_size_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
-        test_output.close();
+        std::cout.close();
     }
 
     vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)
@@ -116,7 +116,7 @@ public:
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
-        test_output << std::endl << "CUFFT FORWARD Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        std::cout << std::endl << "CUFFT FORWARD Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
@@ -126,8 +126,8 @@ public:
                 device_signal,
                 transform_direction
         );
-        test_output << std::endl << "CUFFT FORWARD Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        test_output << std::endl << "CUFFT FORWARD C2C (float) Execution result: " << execution_result << std::endl;
+        std::cout << std::endl << "CUFFT FORWARD Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        std::cout << std::endl << "CUFFT FORWARD C2C (float) Execution result: " << execution_result << std::endl;
 
         // Copy Device memory (FFT calculation results - device_signal) to Host memory (RAM)
         cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
@@ -162,6 +162,7 @@ public:
                 CUFFT_FORWARD
         );
 
+        std::cout << std::endl << "CUFFT INVERSE C2C (float) Execution result: " << execution_result << std::endl;
         return device_signal;
     }
 
@@ -171,11 +172,13 @@ public:
         std::ofstream test_output;
         test_output.open("convolution_test.txt", std::ios::out | std::ios::app);
 
+        std::cout << std::endl << "Copying memory from device to device... " << std::endl;
+
         cudaLibXtDesc *device_signal;
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE);
 
-        test_output << std::endl << "CUFFT INVERSE Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        std::cout << std::endl << "CUFFT INVERSE Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
@@ -185,8 +188,8 @@ public:
                 device_signal,
                 CUFFT_INVERSE
         );
-        test_output << std::endl << "CUFFT INVERSE Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        test_output << std::endl << "CUFFT INVERSE C2C (float) Execution result: " << execution_result << std::endl;
+        std::cout << std::endl << "CUFFT INVERSE Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        std::cout << std::endl << "CUFFT INVERSE C2C (float) Execution result: " << execution_result << std::endl;
 
         cufftXtMemcpy(cufft_execution_plan_, input_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
 

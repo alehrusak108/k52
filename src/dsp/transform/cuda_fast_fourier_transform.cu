@@ -43,7 +43,7 @@ public:
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
         std::ofstream test_output;
-        test_output.open("test_output.txt", std::ios::out | std::ios::app);
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -76,7 +76,7 @@ public:
     ~CudaFastFourierTransformImpl() {
 
         std::ofstream test_output;
-        test_output.open("test_output.txt", std::ios::out | std::ios::app);
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
         test_output << "Destroying CUFFT Context..." << std::endl;
 
         // Destroy CUFFT Execution Plan
@@ -102,8 +102,8 @@ public:
     vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction) const
     {
 
-        //std::ofstream test_output;
-        //test_output.open("test_output.txt", std::ios::out | std::ios::app);
+        std::ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
 
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(
@@ -116,7 +116,7 @@ public:
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
-        //test_output << std::endl << "CUFFT Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        test_output << std::endl << "CUFFT Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
@@ -126,8 +126,8 @@ public:
                 device_signal,
                 transform_direction
         );
-        //test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        //test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
+        test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
 
         // Copy Device memory (FFT calculation results - device_signal) to Host memory (RAM)
         cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
@@ -137,11 +137,11 @@ public:
         cufftXtFree(device_signal);
         cudaFree(host_signal);
 
-        //test_output.close();
+        test_output.close();
         return result_vector;
     }
 
-    cudaLibXtDesc* DirectTransformMemoryDesc(const vector<complex<double> > &sequence) const
+    cudaLibXtDesc* DirectTransformLibXtDesc(const vector<complex<double> > &sequence) const
     {
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(
@@ -165,11 +165,12 @@ public:
         return device_signal;
     }
 
-    vector<complex<double> > InverseTransformMemoryDesc(cufftComplex *host_signal, int signal_size) const
+    // For this method it is assumed, that input_signal is already in GPU memory
+    vector<complex<double> > InverseTransformFromDevice(cufftComplex *input_signal, int signal_size) const
     {
         cudaLibXtDesc *device_signal;
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
-        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+        cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE);
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         cufftResult execution_result = cufftXtExecDescriptorC2C(
@@ -179,12 +180,11 @@ public:
                 CUFFT_INVERSE
         );
 
-        cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+        cufftXtMemcpy(cufft_execution_plan_, input_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
 
-        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_signal, signal_size_);
+        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(input_signal, signal_size_);
 
         cufftXtFree(device_signal);
-        cudaFree(host_signal);
 
         return result_vector;
     }
@@ -237,16 +237,16 @@ vector<complex<double> > CudaFastFourierTransform::InverseTransform(
     return cuda_fast_fourier_transform_impl_->InverseTransform(sequence);
 }
 
-cudaLibXtDesc* CudaFastFourierTransform::DirectTransformMemoryDesc(
+cudaLibXtDesc* CudaFastFourierTransform::DirectTransformLibXtDesc(
         const vector<complex<double> > &sequence) const
 {
-    return cuda_fast_fourier_transform_impl_->DirectTransformMemoryDesc(sequence);
+    return cuda_fast_fourier_transform_impl_->DirectTransformLibXtDesc(sequence);
 }
 
-vector<complex<double> > CudaFastFourierTransform::InverseTransformMemoryDesc(
-        cufftComplex *host_signal, int signal_size) const
+vector<complex<double> > CudaFastFourierTransform::InverseTransformFromDevice(
+        cufftComplex *input_signal, int signal_size) const
 {
-    return cuda_fast_fourier_transform_impl_->InverseTransformMemoryDesc(host_signal, signal_size);
+    return cuda_fast_fourier_transform_impl_->InverseTransformFromDevice(input_signal, signal_size);
 }
 
 #endif //BUILD_WITH_CUDA

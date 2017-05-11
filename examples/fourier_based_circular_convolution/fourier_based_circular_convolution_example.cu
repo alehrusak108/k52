@@ -1,4 +1,5 @@
 #include <k52/dsp/transform/fast_fourier_transform.h>
+#include <k52/dsp/transform/fourier_based_circular_convolution.h>
 
 #include <iostream>
 #include <ctime>
@@ -9,6 +10,7 @@
 #ifdef BUILD_WITH_CUDA
 
 #include <k52/dsp/transform/cuda_fast_fourier_transform.h>
+#include <k52/dsp/transform/cuda_fourier_based_circular_convolution.h>
 
 #endif
 
@@ -32,13 +34,7 @@ double CUFFTPerformanceTest(vector<complex<double> > &input_signal) {
 
     clock_t execution_time = clock();
 
-    // In this test, we don't care about transformation result
     vector<complex<double> > output = cufftTransformer.DirectTransform(input_signal);
-
-    /*cout << endl << "CUFFT OUTPUT" << endl;
-    for (int i = 0; i < input_signal.size(); i++) {
-        cout << output[i].real() << "\t\t" << output[i].imag() << endl;
-    }*/
 
     clock_t finish = clock() - execution_time;
     test_output << endl << "Time elapsed for CUFFT Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
@@ -61,13 +57,7 @@ double FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 
     clock_t execution_time = clock();
 
-    // In this test, we don't care about transformation result
     vector<complex<double> > output = fftw3Transformer.DirectTransform(input_signal);
-
-    /*cout << endl << "FFTW OUTPUT" << endl;
-    for (int i = 0; i < input_signal.size(); i++) {
-        cout << output[i].real() << "\t" << output[i].imag() << endl;
-    }*/
 
     clock_t finish = clock() - execution_time;
     test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
@@ -79,40 +69,67 @@ double FFTWPerformanceTest(vector<complex<double> > &input_signal) {
 vector<complex<double> > PrepareTestSignal(size_t signal_size) {
     vector<complex<double> > input_signal(signal_size);
     for (size_t index = 0; index < signal_size; index++) {
-        //input_signal[index].real(index);
-        //input_signal[index].imag(0);
-        input_signal[index].real(-5 + rand() % 15);
-        input_signal[index].imag(-5 + rand() % 15);
+        input_signal[index].real(index);
+        input_signal[index].imag(0);
+        /*input_signal[index].real(-5 + rand() % 15);
+        input_signal[index].imag(-5 + rand() % 15);*/
     }
-    /*for (int i = 0; i < signal_size; i++) {
-        cout << input_signal[i].real() << "\t" << input_signal[i].imag() << endl;
-    }*/
+    printComplexVector(input_signal);
     return input_signal;
+}
+
+void FastFourierTransformTest() {
+    ofstream test_output;
+    test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
+    int signal_size = 262144;
+    for (int test_index = 1; test_index <= 8; test_index++) {
+        vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
+        test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
+        CUFFTPerformanceTest(input_signal);
+        test_output << "-----------------------------------------------------------------------" << endl << endl;
+        FFTWPerformanceTest(input_signal);
+        test_output << "===============================================================================" << endl << endl;
+        signal_size *= 2;
+    }
+    test_output.close();
+}
+
+void CircularConvolutionTest() {
+    ofstream test_output;
+    test_output.open("convolution_test.txt", ios::out | ios::app);
+
+    int signal_size = 128;
+    test_output << endl << "Signal Length is: " << signal_size << endl;
+    vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
+    vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
+
+    CudaFourierBasedCircularConvolution cufftConvolutor(input_signal.size(), CUFFT_EXECUTIONS_PLANNED);
+    vector<complex<double> > cufft_result = cufftConvolutor.EvaluateConvolution(first_signal, second_signal);
+    printComplexVector(cufft_result);
+
+    test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
+    test_output.close();
+}
+
+void printComplexVector(ofstream &output_file, vector<complex<double> > &vec)
+{
+    for (int i = 0; i < vec.size(); i++)
+    {
+        output_file << vec[i].real() << "\t" << vec[i].imag() << endl;
+    }
+}
+
+void printComplexVector(vector<complex<double> > &vec)
+{
+    for (int i = 0; i < vec.size(); i++)
+    {
+        cout << vec[i].real() << "\t" << vec[i].imag() << endl;
+    }
 }
 
 int main(int argc, char* argv[])
 {
     srand(time(NULL));
-    ofstream test_output;
-    test_output.open("test_output.txt", ios::out | ios::app);
-    int signal_size = 33554432;
-    int window_size = 1024;
-    int windows_count = 33554432 / 1024;
-    vector<complex<double> > input_signal = PrepareTestSignal(signal_size);
-    double cufft_summary = 0.0;
-    double fftw_summary = 0.0;
-    for (int index = 0; index < windows_count - 1; index++) {
-        vector<complex<double> >::const_iterator start = input_signal.begin() + index * window_size;
-        vector<complex<double> >::const_iterator end = input_signal.begin() + (index + 1) * window_size;
-        vector<complex<double> > window(start, end);
-        //test_output << endl << "TEST #" << test_number << "\t" << "Signal Length is: " << signal_size << endl;
-        cufft_summary += CUFFTPerformanceTest(window);
-        //test_output << "---------------------------------------------" << endl << endl;
-        fftw_summary += FFTWPerformanceTest(window);
-        //test_output << "===============================================================================" << endl << endl;
-        //signal_size *= 2;
-    }
-    test_output << endl << endl << "CUFFT SUMMARY TIME: " << cufft_summary << endl << endl;
-    test_output << endl << endl << "FFTW3 SUMMARY TIME: " << fftw_summary << endl << endl;
-    test_output.close();
+    FastFourierTransformTest();
+    CircularConvolutionTest();
 }

@@ -65,12 +65,12 @@ public:
         }
 
         // Actual computations
-        //std::ofstream test_output;
-        //test_output.open("test_output.txt", std::ios::out | std::ios::app);
+        std::ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
         clock_t execution_time = clock();
         fftw_execute(plan_);
-        //test_output << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        //test_output.close();
+        test_output << std::endl << "FFTW3 Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        test_output.close();
 
         vector< complex< double > > result(signal_size_);
         for (size_t n = 0; n < signal_size_; ++n)

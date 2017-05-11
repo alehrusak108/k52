@@ -20,8 +20,8 @@ public:
     CudaFourierBasedCircularConvolution(size_t sequence_size, int executions_planned);
 
     std::vector<std::complex<double> > EvaluateConvolution(
-            const std::vector<std::complex<double> > &first_sequence,
-            const std::vector<std::complex<double> > &second_sequence
+            const std::vector<std::complex<double> > &first_signal,
+            const std::vector<std::complex<double> > &second_signal
     ) const;
 
 private:

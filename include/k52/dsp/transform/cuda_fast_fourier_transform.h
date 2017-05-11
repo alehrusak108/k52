@@ -39,10 +39,10 @@ public:
     virtual vector<complex<double> > InverseTransform(
             const vector<complex<double> > &sequence) const;
 
-    virtual cudaLibXtDesc* DirectTransformMemoryDesc(
+    virtual cudaLibXtDesc* DirectTransformLibXtDesc(
             const vector<complex<double> > &sequence) const;
 
-    virtual vector<complex<double> > InverseTransformMemoryDesc(
+    virtual vector<complex<double> > InverseTransformFromDevice(
             cufftComplex*, int) const;
 private:
 

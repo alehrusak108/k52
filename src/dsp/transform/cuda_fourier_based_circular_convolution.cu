@@ -95,9 +95,12 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
         std::cout << gpu0_result_from_gpu1[i].x << "\t" << gpu0_result_from_gpu1[i].y << std::endl;
     }
 
+    vector<complex<double> > convolution =
+            cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);
+
     cufftXtFree(sum_signal_transform);
 
-    return cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);
+    return convolution;
 }
 
 #endif //BUILD_WITH_CUDA

@@ -13,6 +13,7 @@
 #include <k52/dsp/transform/util/cuda_utils.h>
 #include "../../../../../../../usr/local/cuda/include/cuda_runtime_api.h"
 #include "../../../../../../../usr/local/cuda/include/device_launch_parameters.h"
+#include "../../../../../../../usr/local/cuda/include/cufftXt.h"
 
 // TODO: DELETE THIS IMPORTS - THEY ARE ONLY FOR CLION COMPILATION PURPOSE
 
@@ -81,6 +82,8 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cufftComplex *gpu0_result = (cufftComplex*) (result_descriptor->data[0]);
     cufftComplex *gpu1_result = (cufftComplex*) (result_descriptor->data[1]);
 
+    cufftXtFree(sum_signal_transform);
+
     // Copy FFT-results from GPU_1 to GPU_0
     // To calculate multiplication in parallel on one device
     cufftComplex *gpu0_result_from_gpu1;
@@ -89,6 +92,8 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     cudaSetDevice(0);
     MultiplySignals<<<64, 256>>>(gpu0_result_from_gpu1, gpu0_result, signal_size);
+
+    cudaFree(gpu0_result);
 
     return cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);
 }

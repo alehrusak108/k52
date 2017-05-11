@@ -155,7 +155,7 @@ public:
         std::ofstream test_output;
         test_output.open("convolution_test.txt", std::ios::out | std::ios::app);
 
-        //PrepareCufftExecutionPlan();
+        PrepareCufftExecutionPlan();
 
         std::cout << std::endl << "Copying memory from device to device... " << std::endl;
 

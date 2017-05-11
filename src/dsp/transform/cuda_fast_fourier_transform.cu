@@ -42,8 +42,8 @@ public:
     CudaFastFourierTransformImpl(size_t sequence_size, int transforms_count)
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
-        std::ofstream std::cout;
-        std::cout.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
+        std::ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -75,8 +75,8 @@ public:
 
     ~CudaFastFourierTransformImpl() {
 
-        std::ofstream std::cout;
-        std::cout.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
+        std::ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
         std::cout << "Destroying CUFFT Context..." << std::endl;
 
         // Destroy CUFFT Execution Plan
@@ -86,7 +86,7 @@ public:
         free(cufft_work_size_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
-        std::cout.close();
+        test_output.close();
     }
 
     vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)

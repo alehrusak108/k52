@@ -143,9 +143,9 @@ public:
 
     cudaLibXtDesc* DirectTransformLibXtDesc(const vector<complex<double> > &sequence) const
     {
-        if (signal_size_ != sequence.size()) {
+        if (signal_size_ * 2 != sequence.size()) {
             throw std::invalid_argument(
-                    "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
+                    "CudaFastFourierTransform LibXtDesc can transform only data of doubled size of a signal size.");
         }
 
         cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);

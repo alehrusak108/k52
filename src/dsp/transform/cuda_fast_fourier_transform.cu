@@ -102,8 +102,8 @@ public:
     vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction) const
     {
 
-        std::ofstream test_output;
-        test_output.open("test_output.txt", std::ios::out | std::ios::app);
+        //std::ofstream test_output;
+        //test_output.open("test_output.txt", std::ios::out | std::ios::app);
 
         if (signal_size_ != sequence.size()) {
             throw std::invalid_argument(
@@ -116,7 +116,7 @@ public:
         cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
 
-        test_output << std::endl << "CUFFT Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        //test_output << std::endl << "CUFFT Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
@@ -126,8 +126,8 @@ public:
                 device_signal,
                 transform_direction
         );
-        test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
+        //test_output << std::endl << "CUFFT Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        //test_output << std::endl << "CUFFT C2C (float) Execution result: " << execution_result << std::endl;
 
         // Copy Device memory (FFT calculation results - device_signal) to Host memory (RAM)
         cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
@@ -137,7 +137,7 @@ public:
         cufftXtFree(device_signal);
         cudaFree(host_signal);
 
-        test_output.close();
+        //test_output.close();
         return result_vector;
     }
 

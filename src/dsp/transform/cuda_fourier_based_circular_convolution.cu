@@ -93,6 +93,10 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cudaSetDevice(0);
     MultiplySignals<<<64, 256>>>(gpu0_result_from_gpu1, gpu0_result, signal_size);
 
+    for (int i = 0; i < signal_size; i++) {
+        std::cout << gpu0_result_from_gpu1[i].x << "\t" << gpu0_result_from_gpu1[i].y << std::endl;
+    }
+
     cudaFree(gpu0_result);
 
     return cufft_transformer_->InverseTransformFromDevice(gpu0_result_from_gpu1, signal_size);

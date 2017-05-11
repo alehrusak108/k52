@@ -42,7 +42,7 @@ public:
     virtual cudaLibXtDesc* DirectTransformLibXtDesc(
             const vector<complex<double> > &sequence) const;
 
-    virtual vector<complex<double> > InverseTransformFromDevice(
+    virtual vector<complex<double> > InverseTransformCufftComplex(
             cufftComplex*, int) const;
 private:
 

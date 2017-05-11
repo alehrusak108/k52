@@ -53,7 +53,24 @@ public:
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
 
-        PrepareCufftExecutionPlan();
+        // Use only 2 GPUs if even more available
+        int available_gpus;
+        cudaGetDeviceCount(&available_gpus);
+        int gpu_to_use = available_gpus > 2 ? 2 : available_gpus;
+        int *gpu_array = GetAvailableGPUArray(gpu_to_use);
+
+        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
+        cufftCreate(&cufft_execution_plan_);
+        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
+        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
+        cufftResult plan_prepare_result = cufftMakePlan1d(
+                cufft_execution_plan_,
+                signal_size_,
+                CUFFT_C2C,
+                transforms_count_,
+                cufft_work_size_
+        );
+        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -155,8 +172,6 @@ public:
         std::ofstream test_output;
         test_output.open("convolution_test.txt", std::ios::out | std::ios::app);
 
-        PrepareCufftExecutionPlan();
-
         std::cout << std::endl << "Copying memory from device to device... " << std::endl;
 
         cudaLibXtDesc *device_signal;
@@ -201,28 +216,6 @@ private:
     size_t *cufft_work_size_;
     cufftHandle cufft_execution_plan_;
 
-    void PrepareCufftExecutionPlan()
-    {
-        // Use only 2 GPUs if even more available
-        int available_gpus;
-        cudaGetDeviceCount(&available_gpus);
-        int gpu_to_use = available_gpus > 2 ? 2 : available_gpus;
-        int *gpu_array = GetAvailableGPUArray(gpu_to_use);
-
-        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
-        cufftCreate(&cufft_execution_plan_);
-        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
-        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
-        cufftResult plan_prepare_result = cufftMakePlan1d(
-                cufft_execution_plan_,
-                signal_size_,
-                CUFFT_C2C,
-                transforms_count_,
-                cufft_work_size_
-        );
-        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
-    }
-
     int* GetAvailableGPUArray(int gpu_count)
     {
         int *gpu_array = (int*) malloc(sizeof(int) * gpu_count);
@@ -264,7 +257,7 @@ cudaLibXtDesc* CudaFastFourierTransform::DirectTransformLibXtDesc(
     return cuda_fast_fourier_transform_impl_->DirectTransformLibXtDesc(sequence);
 }
 
-vector<complex<double> > CudaFastFourierTransform::InverseTransformFromDevice(
+vector<complex<double> > CudaFastFourierTransform::InverseTransformCufftComplex(
         cufftComplex *input_signal, int signal_size) const
 {
     return cuda_fast_fourier_transform_impl_->InverseTransformFromDevice(input_signal, signal_size);

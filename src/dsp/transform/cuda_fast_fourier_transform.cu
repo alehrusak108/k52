@@ -53,24 +53,7 @@ public:
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
 
-        // Use only 2 GPUs if even more available
-        int available_gpus;
-        cudaGetDeviceCount(&available_gpus);
-        int gpu_to_use = available_gpus > 2 ? 2 : available_gpus;
-        int *gpu_array = GetAvailableGPUArray(gpu_to_use);
-
-        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
-        cufftCreate(&cufft_execution_plan_);
-        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
-        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
-        cufftResult plan_prepare_result = cufftMakePlan1d(
-                cufft_execution_plan_,
-                signal_size_,
-                CUFFT_C2C,
-                transforms_count_,
-                cufft_work_size_
-        );
-        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+        PrepareCufftExecutionPlan();
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -99,7 +82,7 @@ public:
         return Transform(sequence, CUFFT_INVERSE);
     }
 
-    vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction) const
+    vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction)
     {
 
         if (signal_size_ != sequence.size()) {
@@ -141,7 +124,7 @@ public:
         return result_vector;
     }
 
-    cudaLibXtDesc* DirectTransformLibXtDesc(const vector<complex<double> > &sequence) const
+    cudaLibXtDesc* DirectTransformLibXtDesc(const vector<complex<double> > &sequence)
     {
         if (signal_size_ * 2 != sequence.size()) {
             throw std::invalid_argument(
@@ -162,15 +145,17 @@ public:
                 CUFFT_FORWARD
         );
 
-        std::cout << std::endl << "CUFFT INVERSE C2C (float) Execution result: " << execution_result << std::endl;
+        std::cout << std::endl << "CUFFT DIRECT C2C (float) Execution result: " << execution_result << std::endl;
         return device_signal;
     }
 
     // For this method it is assumed, that input_signal is already in GPU memory
-    vector<complex<double> > InverseTransformFromDevice(cufftComplex *input_signal, int signal_size) const
+    vector<complex<double> > InverseTransformFromDevice(cufftComplex *input_signal, int signal_size)
     {
         std::ofstream test_output;
         test_output.open("convolution_test.txt", std::ios::out | std::ios::app);
+
+        PrepareCufftExecutionPlan();
 
         std::cout << std::endl << "Copying memory from device to device... " << std::endl;
 
@@ -215,6 +200,28 @@ private:
 
     size_t *cufft_work_size_;
     cufftHandle cufft_execution_plan_;
+
+    void PrepareCufftExecutionPlan()
+    {
+        // Use only 2 GPUs if even more available
+        int available_gpus;
+        cudaGetDeviceCount(&available_gpus);
+        int gpu_to_use = available_gpus > 2 ? 2 : available_gpus;
+        int *gpu_array = GetAvailableGPUArray(gpu_to_use);
+
+        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
+        cufftCreate(&cufft_execution_plan_);
+        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
+        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
+        cufftResult plan_prepare_result = cufftMakePlan1d(
+                cufft_execution_plan_,
+                signal_size_,
+                CUFFT_C2C,
+                transforms_count_,
+                cufft_work_size_
+        );
+        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+    }
 
     int* GetAvailableGPUArray(int gpu_count)
     {

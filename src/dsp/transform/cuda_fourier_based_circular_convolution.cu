@@ -85,8 +85,10 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // Copy FFT-results from GPU_1 to GPU_0
     // To calculate multiplication in parallel on one device
     cufftComplex *gpu0_result_from_gpu1;
-    cudaMalloc((void**) &gpu0_result_from_gpu1, signal_memory_size);
-    cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_memory_size, cudaMemcpyDeviceToDevice);
+    cudaError error = cudaMalloc((void**) &gpu0_result_from_gpu1, signal_memory_size);
+    std::cout << error << std::endl;
+    error = cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_memory_size, cudaMemcpyDeviceToDevice);
+    std::cout << error << std::endl;
 
     cudaSetDevice(0);
     MultiplySignals<<<64, 256>>>(gpu0_result_from_gpu1, gpu0_result, signal_size);

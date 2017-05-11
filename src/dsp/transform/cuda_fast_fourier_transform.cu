@@ -175,8 +175,8 @@ public:
         std::cout << std::endl << "Copying memory from device to device... " << std::endl;
 
         cudaLibXtDesc *device_signal;
-        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
-        cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE);
+        std::cout << std::endl << cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE) << std::endl;
+        std::cout << std::endl << cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE); << std::endl;
 
         std::cout << std::endl << "CUFFT INVERSE Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 

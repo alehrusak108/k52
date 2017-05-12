@@ -15,6 +15,7 @@
 
 using ::std::vector;
 using ::std::complex;
+using ::std::string;
 
 #ifdef BUILD_WITH_CUDA
 
@@ -26,6 +27,10 @@ public:
     static cufftComplex* VectorToCufftComplex(const vector<complex<double> > &sequence);
 
     static vector<complex<double> > CufftComplexToVector(cufftComplex *cufft_complex_sequence, int sequence_size);
+
+    static void checkCufftErrors(cufftResult, const string &);
+
+    static void checkErrors(cudaError, const string &);
 };
 
 #endif //BUILD_WITH_CUDA

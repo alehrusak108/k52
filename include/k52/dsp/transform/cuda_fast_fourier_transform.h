@@ -42,8 +42,10 @@ public:
     virtual cudaLibXtDesc* DirectTransformLibXtDesc(
             const vector<complex<double> > &sequence) const;
 
-    virtual vector<complex<double> > InverseTransformCufftComplex(
-            cufftComplex*, int) const;
+    virtual vector<complex<double> > InverseTransformLibXtDesc(
+            cudaLibXtDesc *, int) const;
+
+    virtual int GetAvailableGPUs() const;
 private:
 
     class CudaFastFourierTransformImpl;

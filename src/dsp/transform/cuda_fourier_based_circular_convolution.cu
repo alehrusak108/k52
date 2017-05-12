@@ -27,21 +27,18 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 
 // CUDA kernel function used to multiply two signals in parallel
 // NOTE: Result is written instead of first signal
-__global__ void MultiplySignals(cufftComplex *first,
-                                cufftComplex *second,
-                                int signal_size)
+__global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size)
 {
-    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id < signal_size)
-    {
         // Elements of the result of signals multiplication are calculated in parallel
         // using thread_id variable - thread index.
         // Each thread calculates one element of result sequence at first[thread_id] moment.
+    const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    for (int id = thread_id; id < signal_size; id += threads_count) {
         cufftComplex result_element;
         result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
         result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
-        first[thread_id].x = result_element.x;
-        first[thread_id].y = result_element.y;
+        first[id] = result_element;
     }
 }
 
@@ -61,52 +58,54 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     size_t signal_size = first_signal.size();
 
-    // Create one signal based on input signals to pass it through
-    // Two GPUs via cudaLibXt, assuming, that signals are of the same size
-    // And sum of sizes is multiplied by 2.
-    vector<complex<double> > sum_signal;
-
-    sum_signal.reserve(signal_size * 2);
-    copy(first_signal.begin(), first_signal.end(), back_inserter(sum_signal));
-    copy(second_signal.begin(), second_signal.end(), back_inserter(sum_signal));
-
     // Here are used additional CudaFastFourierTransform methods
     // to prevent from useless copying cufftComplex arrays into vector
-    cudaLibXtDesc *sum_signal_transform =
-            cufft_transformer_->DirectTransformLibXtDesc(sum_signal);
+    cudaLibXtDesc *first_transform =
+            cufft_transformer_->DirectTransformLibXtDesc(first_signal);
+    cudaLibXtDesc *second_transform =
+            cufft_transformer_->DirectTransformLibXtDesc(second_signal);
+    cudaMalloc()
+    // Perform Multiplication on several GPUs
+    int available_gpus = cufft_transformer_->GetAvailableGPUs();
+    MultiplySignalsOnMultipleGPUs(first_transform, second_transform, signal_size, available_gpus);
 
-    cudaXtDesc *result_descriptor = sum_signal_transform->descriptor;
-
-    // Get FFT-results from each GPU
-    cufftComplex *gpu0_result = (cufftComplex*) (result_descriptor->data[0]);
-    cufftComplex *gpu1_result = (cufftComplex*) (result_descriptor->data[1]);
-
-    // Copy FFT-results from GPU_1 to GPU_0
-    // To calculate multiplication in parallel on one device
-    cufftComplex *gpu0_result_from_gpu1;
-    cudaError error = cudaMallocHost((void**) &gpu0_result_from_gpu1, sizeof(cufftComplex) * signal_size);
-    std::cout << error << std::endl;
-    error = cudaMemcpy(gpu0_result_from_gpu1, gpu1_result, signal_size, cudaMemcpyDeviceToDevice);
-    std::cout << error << std::endl;
-
-    error = cudaSetDevice(0);
-    std::cout << error << std::endl;
-    MultiplySignals<<<32, 256>>>(gpu0_result_from_gpu1, gpu0_result, signal_size);
-
-    cufftComplex *multiplication = (cufftComplex *) malloc(sizeof(cufftComplex) * signal_size);
-    error = cudaMemcpy(multiplication, gpu0_result_from_gpu1, signal_size, cudaMemcpyDeviceToHost);
-    std::cout << error << std::endl;
-
-    for (int i = 0; i < signal_size; i++) {
-        std::cout << multiplication[i].x << "\t" << multiplication[i].y << std::endl;
-    }
+    /*for (int i = 0; i < signal_size; i++) {
+        std::cout << first_transform[i].x << "\t" << first_transform[i].y << std::endl;
+    }*/
 
     vector<complex<double> > convolution =
-            cufft_transformer_->InverseTransformCufftComplex(multiplication, signal_size);
+            cufft_transformer_->InverseTransformLibXtDesc(multiplication, signal_size);
 
     cufftXtFree(sum_signal_transform);
 
     return convolution;
+}
+
+void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
+        cudaLibXtDesc *first_desc, cudaLibXtDesc *second_desc, int signal_size, int gpu_count) const
+{
+    int device;
+    for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
+    {
+        device = first_desc->descriptor->GPUs[gpu_index];
+
+        // Set GPU
+        cudaSetDevice(device);
+        // Perform GPU computations
+        MultiplySignals<<<32, 256>>>(
+                (cufftComplex *) first_desc->descriptor->data[gpu_index],
+                (cufftComplex *) second_desc->descriptor->data[gpu_index],
+                signal_size
+        );
+    }
+
+    // Wait for device to finish all operation
+    for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
+    {
+        device = first_desc->descriptor->GPUs[gpu_index];
+        cudaSetDevice(device);
+        cudaDeviceSynchronize();
+    }
 }
 
 #endif //BUILD_WITH_CUDA

@@ -42,51 +42,51 @@ public:
     CudaFastFourierTransformImpl(size_t sequence_size, int transforms_count)
             : signal_size_(sequence_size), transforms_count_(transforms_count) {
 
-        std::ofstream test_output;
-        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
-
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
-        if (sequence_size <= 0) {
+        if (sequence_size <= 0)
+        {
             throw std::invalid_argument("sequence_size <= 0");
         }
 
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
 
         // Use only 2 GPUs if even more available
-        int available_gpus;
-        cudaGetDeviceCount(&available_gpus);
-        int gpu_to_use = available_gpus > 2 ? 2 : available_gpus;
-        int *gpu_array = GetAvailableGPUArray(gpu_to_use);
+        cudaError error = cudaGetDeviceCount(&available_gpus);
+        CudaUtils::checkErrors(error, "CUDA Get Device Count");
 
-        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * gpu_to_use);
-        cufftCreate(&cufft_execution_plan_);
-        cufftResult set_gpus_result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
-        std::cout << std::endl << "CUFFT Set GPUs result: " << set_gpus_result << std::endl;
-        cufftResult plan_prepare_result = cufftMakePlan1d(
+        int *gpu_array = GetAvailableGPUArray();
+
+        cufft_work_size_ = (size_t *) malloc (sizeof(size_t) * available_gpus);
+        cufftResult result;
+        result = cufftCreate(&cufft_execution_plan_);
+        CudaUtils::checkCufftErrors(result, "CUFFT Create Plan");
+
+        result = cufftXtSetGPUs(cufft_execution_plan_, available_gpus, gpu_array);
+        CudaUtils::checkCufftErrors(result, "CUFFT Set GPUs");
+
+        result = cufftMakePlan1d(
                 cufft_execution_plan_,
                 signal_size_,
                 CUFFT_C2C,
                 transforms_count_,
                 cufft_work_size_
         );
-        std::cout << std::endl << "CUFFT Execution Plan prepared: " << plan_prepare_result << std::endl;
+        CudaUtils::checkCufftErrors(result, "CUFFT Execution Plan preparing");
     }
 
     ~CudaFastFourierTransformImpl() {
 
-        std::ofstream test_output;
-        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
-        std::cout << "Destroying CUFFT Context..." << std::endl;
+        std::cout << "Destroying CUFFT Context..." << std::endl << std::endl;
 
-        // Destroy CUFFT Execution Plan
-        cufftResult destructor_result = cufftDestroy(cufft_execution_plan_);
-        std::cout << "CUFFT Execution Plan destructor returned: " << destructor_result << std::endl << std::endl;
+        cufftResult result = cufftDestroy(cufft_execution_plan_);
+        CudaUtils::checkCufftErrors(result, "CUFFT Execution Plan destructor");
 
         free(cufft_work_size_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
-        test_output.close();
+
+        std::cout << "CUFFT Context Destroyed" << std::endl << std::endl;
     }
 
     vector<complex<double> > DirectTransform(const vector<complex<double> > &sequence)
@@ -102,105 +102,123 @@ public:
     vector<complex<double> > Transform(const vector<complex<double> > &sequence, int transform_direction)
     {
 
-        if (signal_size_ != sequence.size()) {
+        if (signal_size_ != sequence.size())
+        {
             throw std::invalid_argument(
                     "CudaFastFourierTransform can transform only data of the same size as was specified on construction.");
         }
 
-        std::ofstream test_output;
-        test_output.open("fast_fourier_transform_test.txt", std::ios::out | std::ios::app);
-
         cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
 
-        cudaLibXtDesc *device_signal;
-        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
-        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+        cufftResult result;
 
-        std::cout << std::endl << "CUFFT FORWARD Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        cudaLibXtDesc *device_signal;
+
+        result = cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD allocation across GPUs");
+
+        result = cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD memory copying from Host to Device");
+
+        std::cout << std::endl << "CUFFT FORWARD memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
-        cufftResult execution_result = cufftXtExecDescriptorC2C(
+        result = cufftXtExecDescriptorC2C(
                 cufft_execution_plan_,
                 device_signal,
                 device_signal,
                 transform_direction
         );
         std::cout << std::endl << "CUFFT FORWARD Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        std::cout << std::endl << "CUFFT FORWARD C2C (float) Execution result: " << execution_result << std::endl;
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD C2C execution");
 
         // Copy Device memory (FFT calculation results - device_signal) to Host memory (RAM)
-        cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+        result = cufftXtMemcpy(cufft_execution_plan_, host_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
 
         vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_signal, signal_size_);
 
         cufftXtFree(device_signal);
-        cudaFree(host_signal);
+        free(host_signal);
 
-        test_output.close();
         return result_vector;
     }
 
     cudaLibXtDesc* DirectTransformLibXtDesc(const vector<complex<double> > &sequence)
     {
-        if (signal_size_ * 2 != sequence.size()) {
+        if (signal_size_ != sequence.size())
+        {
             throw std::invalid_argument(
                     "CudaFastFourierTransform LibXtDesc can transform only data of doubled size of a signal size.");
         }
 
+        cufftResult result;
+
         cufftComplex *host_signal = CudaUtils::VectorToCufftComplex(sequence);
 
-        cudaLibXtDesc *device_signal;
-        cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
-        cufftXtMemcpy(cufft_execution_plan_, device_signal, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+        cudaLibXtDesc *device_transform;
+        result = cufftXtMalloc(cufft_execution_plan_, &device_transform, CUFFT_XT_FORMAT_INPLACE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc allocation across GPUs");
 
-        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
-        cufftResult execution_result = cufftXtExecDescriptorC2C(
-                cufft_execution_plan_,
-                device_signal,
-                device_signal,
-                CUFFT_FORWARD
-        );
-
-        std::cout << std::endl << "CUFFT DIRECT C2C (float) Execution result: " << execution_result << std::endl;
-        return device_signal;
-    }
-
-    // For this method it is assumed, that input_signal is already in GPU memory
-    vector<complex<double> > InverseTransformFromDevice(cufftComplex *input_signal, int signal_size)
-    {
-        std::ofstream test_output;
-        test_output.open("convolution_test.txt", std::ios::out | std::ios::app);
-
-        std::cout << std::endl << "Copying memory from device to device... " << std::endl;
-
-        cudaLibXtDesc *device_signal;
-        cufftResult malloc_result = cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
-        std::cout << std::endl << malloc_result << std::endl;
-        cufftResult memcpy_result = cufftXtMemcpy(cufft_execution_plan_, device_signal, input_signal, CUFFT_COPY_DEVICE_TO_DEVICE);
-        std::cout << std::endl << memcpy_result << std::endl;
-
-        std::cout << std::endl << "CUFFT INVERSE Signal memory allocated across GPUs: " << signal_memory_size_ << " bytes." << std::endl;
+        result = cufftXtMemcpy(cufft_execution_plan_, device_transform, host_signal, CUFFT_COPY_HOST_TO_DEVICE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc memory copying from Host to Device");
 
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
         clock_t execution_time = clock();
-        cufftResult execution_result = cufftXtExecDescriptorC2C(
+        result = cufftXtExecDescriptorC2C(
+                cufft_execution_plan_,
+                device_transform,
+                device_transform,
+                CUFFT_FORWARD
+        );
+        std::cout << std::endl << "CUFFT FORWARD LibXtDesc Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C execution");
+
+        // Copy the data to natural order on GPUs
+        cudaLibXtDesc *natural_ordered_transform;
+        cufftXtMalloc(cufft_execution_plan_, &natural_ordered_transform, CUFFT_XT_FORMAT_INPLACE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C allocation memory for result");
+
+        cufftXtMemcpy(cufft_execution_plan_, natural_ordered_transform, device_transform, CUFFT_COPY_DEVICE_TO_DEVICE);
+        CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C memory copying from Device to Host");
+
+        cufftXtFree(device_transform);
+        return natural_ordered_transform;
+    }
+
+    // For this method it is assumed, that input_signal is already in GPU memory
+    vector<complex<double> > InverseTransformLibXtDesc(cudaLibXtDesc *device_signal, int signal_size)
+    {
+        cufftResult result;
+
+        clock_t execution_time = clock();
+
+        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        result = cufftXtExecDescriptorC2C(
                 cufft_execution_plan_,
                 device_signal,
                 device_signal,
                 CUFFT_INVERSE
         );
         std::cout << std::endl << "CUFFT INVERSE Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
-        std::cout << std::endl << "CUFFT INVERSE C2C (float) Execution result: " << execution_result << std::endl;
+        CudaUtils::checkCufftErrors(result, "CUFFT INVERSE LibXtDesc C2C execution");
 
-        cufftXtMemcpy(cufft_execution_plan_, input_signal, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+        cufftComplex *host_transformed = (cufftComplex *) malloc (signal_memory_size_);
+        result = cufftXtMemcpy(cufft_execution_plan_, host_transformed, device_signal, CUFFT_COPY_DEVICE_TO_HOST);
+        CudaUtils::checkCufftErrors(result, "CUFFT INVERSE LibXtDesc C2C Copying results from Device to Host");
 
-        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(input_signal, signal_size_);
+        vector<complex<double> > result_vector = CudaUtils::CufftComplexToVector(host_transformed, signal_size_);
 
         cufftXtFree(device_signal);
+        free(host_transformed);
 
-        test_output.close();
         return result_vector;
+    }
+
+    int GetAvailableGPUs()
+    {
+        return available_gpus;
     }
 
 private:
@@ -213,13 +231,14 @@ private:
     int transforms_count_;
     int signal_memory_size_;
 
+    int available_gpus;
     size_t *cufft_work_size_;
     cufftHandle cufft_execution_plan_;
 
-    int* GetAvailableGPUArray(int gpu_count)
+    int* GetAvailableGPUArray()
     {
-        int *gpu_array = (int*) malloc(sizeof(int) * gpu_count);
-        for (unsigned int index = 0; index < gpu_count; index++)
+        int *gpu_array = (int*) malloc(sizeof(int) * available_gpus);
+        for (unsigned int index = 0; index < available_gpus; index++)
         {
             gpu_array[index] = index;
         }
@@ -257,10 +276,14 @@ cudaLibXtDesc* CudaFastFourierTransform::DirectTransformLibXtDesc(
     return cuda_fast_fourier_transform_impl_->DirectTransformLibXtDesc(sequence);
 }
 
-vector<complex<double> > CudaFastFourierTransform::InverseTransformCufftComplex(
-        cufftComplex *input_signal, int signal_size) const
+vector<complex<double> > CudaFastFourierTransform::InverseTransformLibXtDesc(
+        cudaLibXtDesc *device_signal, int signal_size) const
 {
-    return cuda_fast_fourier_transform_impl_->InverseTransformFromDevice(input_signal, signal_size);
+    return cuda_fast_fourier_transform_impl_->InverseTransformLibXtDesc(device_signal, signal_size);
+}
+
+int CudaFastFourierTransform::GetAvailableGPUs() const {
+    return cuda_fast_fourier_transform_impl_->GetAvailableGPUs();
 }
 
 #endif //BUILD_WITH_CUDA

@@ -1,4 +1,5 @@
 #include <k52/dsp/transform/fast_fourier_transform.h>
+#include <k52/common/helpers.h>
 #include <stdexcept>
 
 #ifdef BUILD_WITH_FFTW3
@@ -13,6 +14,8 @@ using ::std::vector;
 using ::std::complex;
 using ::std::invalid_argument;
 using ::std::runtime_error;
+
+using k52::common::Helpers;
 
 namespace k52
 {
@@ -81,8 +84,17 @@ public:
     vector< complex< double > > InverseTransform(
             const vector< complex< double > > &sequence)
     {
-        // TODO: Stubbed. Implementation needed.
-        return vector< complex< double > >();
+        size_t N = sequence.size();
+
+        vector< complex< double > > direct_transform_result = DirectTransform(Helpers::Conjugate(sequence));
+        vector< complex< double > > inverse_transform_result = Helpers::Conjugate(direct_transform_result);
+
+        for (std::size_t n = 0; n < N; ++n)
+        {
+            inverse_transform_result[n] = inverse_transform_result[n] / (double) N;
+        }
+
+        return inverse_transform_result;
     }
 
 private:

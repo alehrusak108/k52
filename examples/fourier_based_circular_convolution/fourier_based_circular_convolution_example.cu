@@ -1,5 +1,8 @@
+#include <k52/dsp/transform/i_fourier_transform.h>
 #include <k52/dsp/transform/fast_fourier_transform.h>
 #include <k52/dsp/transform/fourier_based_circular_convolution.h>
+
+#include <boost/smart_ptr/shared_ptr.hpp>
 
 #include <iostream>
 #include <ctime>
@@ -127,11 +130,16 @@ void CircularConvolutionTest() {
     cout << endl << "CUFFT CONVOLUTION: " << endl << endl;
     printComplexVector(cufft_result);
 
-    /*IFourierTransform::shared_ptr fftw_transformer = boost::make_shared<FastFourierTransform>(signal_size);
+    ICircularConvolution::shared_ptr fftw_convolutor = FourierBasedCircularConvolution::shared_ptr(
+            new FourierBasedCircularConvolution(
+                    IFourierTransform::shared_ptr(new FastFourierTransform(signal_size))
+            )
+    );
+
     FourierBasedCircularConvolution fftw_convolutor(fftw_transformer);
     vector<complex<double> > fftw_result = fftw_convolutor.EvaluateConvolution(first_signal, second_signal);
     cout << endl << "FFTW CONVOLUTION: " << endl << endl;
-    printComplexVector(fftw_result);*/
+    printComplexVector(fftw_result);
 
     test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
     test_output.close();

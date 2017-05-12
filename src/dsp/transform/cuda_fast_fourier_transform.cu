@@ -187,18 +187,12 @@ public:
         cudaError error = cudaMemcpy((void **) &f, natural_ordered_transform->descriptor->data[0], size, cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(error, "ERROR 1");
         std::cout << std::endl << "SIZE 1: " << size << std::endl << std::endl;
-        for (int i = 0; i < size; i++) {
-            std::cout << f[i].x << "\t" << f[i].y << std::endl;
-        }
 
         cufftComplex *s = (cufftComplex *) malloc (natural_ordered_transform->descriptor->size[1]);
         size = (int) natural_ordered_transform->descriptor->size[1] / sizeof(cufftComplex);
         error = cudaMemcpy((void **) &s, natural_ordered_transform->descriptor->data[1], size, cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(error, "ERROR 2");
         std::cout << std::endl << "SIZE 2: " << size << std::endl << std::endl;
-        for (int i = 0; i < size; i++) {
-            std::cout << s[i].x << "\t" << s[i].y << std::endl;
-        }
 
         cufftXtFree(device_transform);
         return natural_ordered_transform;

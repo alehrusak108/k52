@@ -92,10 +92,10 @@ vector<complex<double> > PrepareTestSignal(size_t signal_size)
 {
     vector<complex<double> > input_signal(signal_size);
     for (size_t index = 0; index < signal_size; index++) {
-        input_signal[index].real(index);
-        input_signal[index].imag(0);
-        /*input_signal[index].real(-5 + rand() % 15);
-        input_signal[index].imag(-5 + rand() % 15);*/
+        //input_signal[index].real(index);
+        //input_signal[index].imag(0);
+        input_signal[index].real(-5 + rand() % 15);
+        input_signal[index].imag(-5 + rand() % 15);
     }
     //printComplexVector(input_signal);
     return input_signal;
@@ -118,36 +118,30 @@ void FastFourierTransformTest() {
 }
 
 void CircularConvolutionTest() {
-    ofstream test_output;
-    test_output.open("convolution_test.txt", ios::out | ios::app);
 
-    size_t signal_size = 64;
-    test_output << endl << "Signal Length is: " << signal_size << endl;
+    cout << endl << "[ CONVOLUTION TEST STARTED ]" << endl;
+
+    size_t signal_size = 16777216;
+    cout << endl << "Signal Length is: " << signal_size << endl;
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
 
     CudaFourierBasedCircularConvolution cufft_convolutor(signal_size, CUFFT_EXECUTIONS_PLANNED);
-    vector<complex<double> > cufft_result = cufft_convolutor.EvaluateConvolution(first_signal, second_signal);
-    cout << endl << "CUFFT CONVOLUTION: " << endl << endl;
-    printComplexVector(cufft_result);
 
-    ICircularConvolution::shared_ptr fftw_convolutor = FourierBasedCircularConvolution::shared_ptr(
+    clock_t cufft_time = clock();
+    vector<complex<double> > cufft_result = cufft_convolutor.EvaluateConvolution(first_signal, second_signal);
+    cout << endl << "CUFFT CONVOLUTION TIME: " << (double) (clock() - cufft_time) / CLOCKS_PER_SEC << " seconds" << endl << endl;
+
+    FourierBasedCircularConvolution *fftw_convolutor =
             new FourierBasedCircularConvolution(
                     IFourierTransform::shared_ptr(new FastFourierTransform(signal_size))
-            )
-    );
+            );
 
+    clock_t fftw_time = clock();
     vector<complex<double> > fftw_result = fftw_convolutor->EvaluateConvolution(first_signal, second_signal);
-    cout << endl << "FFTW CONVOLUTION: " << endl << endl;
-    printComplexVector(fftw_result);
+    cout << endl << "CUFFT CONVOLUTION TIME: " << (double) (clock() - fftw_time) / CLOCKS_PER_SEC << " seconds" << endl << endl;
 
-    ICircularConvolution *simple_convolutor = new CircularConvolution();
-    vector<complex<double> > simple_result = simple_convolutor->EvaluateConvolution(first_signal, second_signal);
-    cout << endl << "SIMPLE MULTIPLICATION: " << endl << endl;
-    printComplexVector(simple_result);
-
-    test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
-    test_output.close();
+    cout << endl << "[ CONVOLUTION TEST FINISHED ]" << endl;
 }
 
 int main(int argc, char* argv[])

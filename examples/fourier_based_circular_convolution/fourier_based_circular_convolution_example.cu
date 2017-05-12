@@ -117,7 +117,7 @@ void CircularConvolutionTest() {
     ofstream test_output;
     test_output.open("convolution_test.txt", ios::out | ios::app);
 
-    int signal_size = 128;
+    size_t signal_size = 128;
     test_output << endl << "Signal Length is: " << signal_size << endl;
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
@@ -127,7 +127,7 @@ void CircularConvolutionTest() {
     cout << endl << "CUFFT CONVOLUTION: " << endl << endl;
     printComplexVector(cufft_result);
 
-    FastFourierTransform fftw_transformer(signal_size);
+    IFourierTransform *fftw_transformer = new FastFourierTransform(signal_size);
     FourierBasedCircularConvolution fftw_convolutor(fftw_transformer);
     vector<complex<double> > fftw_result = fftw_convolutor.EvaluateConvolution(first_signal, second_signal);
     cout << endl << "FFTW CONVOLUTION: " << endl << endl;

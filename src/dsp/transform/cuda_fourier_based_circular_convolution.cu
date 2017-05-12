@@ -27,7 +27,7 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 
 // CUDA kernel function used to multiply two signals in parallel
 // NOTE: Result is written instead of first signal
-__global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size, float scale)
+__global__ void MultiplySignals(cufftComplex *a, cufftComplex *b, int signal_size, float scale)
 {
     // Elements of the result of signals multiplication are calculated in parallel
     // using thread_id variable - thread index.
@@ -35,12 +35,11 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
     const int threads_count = blockDim.x * gridDim.x;
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     for (int id = thread_id; id < signal_size; id += threads_count) {
-        cufftComplex result_element;
-        result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
-        result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
-        result_element.x = result_element.x * scale;
-        result_element.x = result_element.y * scale;
-        first[id] = result_element;
+        cufftComplex c;
+        c.x = a[id].x * b[id].x - a[id].y * b[id].y;
+        c.y = a[id].x * b[id].y + a[id].y * b[id].x;
+        a[id].x = c.x * scale;
+        a[id].y = c.y * scale;
     }
 }
 
@@ -93,7 +92,7 @@ void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
         MultiplySignals<<<32, 256>>>(
                 (cufftComplex *) first_desc->descriptor->data[gpu_index],
                 (cufftComplex *) second_desc->descriptor->data[gpu_index],
-                int (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex)),
+                (int) (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex)),
                 scale
         );
     }

@@ -182,16 +182,19 @@ public:
         cufftXtMemcpy(cufft_execution_plan_, natural_ordered_transform, device_transform, CUFFT_COPY_DEVICE_TO_DEVICE);
         CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C memory copying from Device to Host");
 
-
         cufftComplex *f = (cufftComplex *) malloc (natural_ordered_transform->descriptor->size[0]);
         cufftXtMemcpy(cufft_execution_plan_, (void **) &f, natural_ordered_transform->descriptor->data[0], CUFFT_COPY_DEVICE_TO_HOST);
-        for (int i = 0; i < natural_ordered_transform->descriptor->size[0]; i++) {
+        int size = (int) natural_ordered_transform->descriptor->size[0] / sizeof(cufftComplex);
+        std::cout << std::endl << "SIZE 1: " << size << std::endl << std::endl;
+        for (int i = 0; i < size; i++) {
             std::cout << f[i].x << "\t" << f[i].y << std::endl;
         }
 
         cufftComplex *s = (cufftComplex *) malloc (natural_ordered_transform->descriptor->size[1]);
         cufftXtMemcpy(cufft_execution_plan_, (void **) &s, natural_ordered_transform->descriptor->data[1], CUFFT_COPY_DEVICE_TO_HOST);
-        for (int i = 0; i < natural_ordered_transform->descriptor->size[1]; i++) {
+        size = (int) natural_ordered_transform->descriptor->size[1] / sizeof(cufftComplex);
+        std::cout << std::endl << "SIZE 2: " << size << std::endl << std::endl;
+        for (int i = 0; i < size; i++) {
             std::cout << s[i].x << "\t" << s[i].y << std::endl;
         }
 

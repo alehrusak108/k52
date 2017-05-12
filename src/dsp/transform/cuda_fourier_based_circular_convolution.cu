@@ -73,7 +73,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     vector<complex<double> > convolution =
             cufft_transformer_->InverseTransformLibXtDesc(first_transform, signal_size);
 
-    cufftXtFree(first_transform);
     cufftXtFree(second_transform);
 
     return convolution;

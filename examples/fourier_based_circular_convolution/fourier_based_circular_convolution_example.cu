@@ -123,8 +123,8 @@ void CircularConvolutionTest() {
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
 
     CudaFourierBasedCircularConvolution cufftConvolutor(signal_size, CUFFT_EXECUTIONS_PLANNED);
-    vector<complex<double> > cufft_result = cufftConvolutor.EvaluateConvolution(first_signal, second_signal);
-    printComplexVector(cufft_result);
+    vector<complex<double> > convolution = cufftConvolutor.EvaluateConvolution(first_signal, second_signal);
+    printComplexVector(convolution);
 
     test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
     test_output.close();

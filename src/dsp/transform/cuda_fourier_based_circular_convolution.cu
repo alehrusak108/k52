@@ -86,7 +86,8 @@ void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
     for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
     {
         device = first_desc->descriptor->GPUs[gpu_index];
-        cudaSetDevice(device);
+        cudaError error = cudaSetDevice(device);
+        CudaUtils::checkErrors(error, "MultiplySignals set GPU");
         MultiplySignals<<<32, 256>>>(
                 (cufftComplex *) first_desc->descriptor->data[gpu_index],
                 (cufftComplex *) second_desc->descriptor->data[gpu_index],

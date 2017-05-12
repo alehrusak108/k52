@@ -1,6 +1,8 @@
 #include <k52/dsp/transform/fast_fourier_transform.h>
 #include <k52/dsp/transform/fourier_based_circular_convolution.h>
 
+#include <boost/smart_ptr/shared_ptr.hpp>
+
 #include <iostream>
 #include <ctime>
 #include <cstdlib>

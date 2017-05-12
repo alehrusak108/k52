@@ -115,7 +115,7 @@ void CircularConvolutionTest() {
 
     cout << endl << "[ CONVOLUTION TEST STARTED ]" << endl;
 
-    size_t signal_size = 128;//16777216;
+    size_t signal_size = 33554432;
     cout << endl << "Signal Length is: " << signal_size << endl;
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
@@ -133,7 +133,7 @@ void CircularConvolutionTest() {
 
     clock_t fftw_time = clock();
     vector<complex<double> > fftw_result = fftw_convolutor->EvaluateConvolution(first_signal, second_signal);
-    cout << endl << "CUFFT CONVOLUTION TIME: " << (double) (clock() - fftw_time) / CLOCKS_PER_SEC << " seconds" << endl << endl;
+    cout << endl << "FFTW CONVOLUTION TIME: " << (double) (clock() - fftw_time) / CLOCKS_PER_SEC << " seconds" << endl << endl;
 
     cout << endl << "[ CONVOLUTION TEST FINISHED ]" << endl;
 }

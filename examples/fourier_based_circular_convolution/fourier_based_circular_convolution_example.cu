@@ -136,8 +136,7 @@ void CircularConvolutionTest() {
             )
     );
 
-    FourierBasedCircularConvolution fftw_convolutor(fftw_transformer);
-    vector<complex<double> > fftw_result = fftw_convolutor.EvaluateConvolution(first_signal, second_signal);
+    vector<complex<double> > fftw_result = fftw_convolutor->EvaluateConvolution(first_signal, second_signal);
     cout << endl << "FFTW CONVOLUTION: " << endl << endl;
     printComplexVector(fftw_result);
 

@@ -127,7 +127,7 @@ void CircularConvolutionTest() {
     cout << endl << "CUFFT CONVOLUTION: " << endl << endl;
     printComplexVector(cufft_result);
 
-    IFourierTransform *fftw_transformer = new FastFourierTransform(signal_size);
+    IFourierTransform::shared_ptr fftw_transformer = boost::make_shared<FastFourierTransform>(signal_size);
     FourierBasedCircularConvolution fftw_convolutor(fftw_transformer);
     vector<complex<double> > fftw_result = fftw_convolutor.EvaluateConvolution(first_signal, second_signal);
     cout << endl << "FFTW CONVOLUTION: " << endl << endl;

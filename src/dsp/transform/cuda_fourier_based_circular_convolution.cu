@@ -64,7 +64,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
             cufft_transformer_->DirectTransformLibXtDesc(first_signal);
     cudaLibXtDesc *second_transform =
             cufft_transformer_->DirectTransformLibXtDesc(second_signal);
-    cudaMalloc()
+    //cudaMalloc()
     // Perform Multiplication on several GPUs
     int available_gpus = cufft_transformer_->GetAvailableGPUs();
     MultiplySignalsOnMultipleGPUs(first_transform, second_transform, signal_size, available_gpus);
@@ -73,10 +73,10 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
         std::cout << first_transform[i].x << "\t" << first_transform[i].y << std::endl;
     }*/
 
-    vector<complex<double> > convolution =
-            cufft_transformer_->InverseTransformLibXtDesc(multiplication, signal_size);
+    vector<complex<double> > convolution/* =
+            cufft_transformer_->InverseTransformLibXtDesc(multiplication, signal_size)*/;
 
-    cufftXtFree(sum_signal_transform);
+    //cufftXtFree(sum_signal_transform);
 
     return convolution;
 }

@@ -67,6 +67,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     // Perform Multiplication on several GPUs
     int available_gpus = cufft_transformer_->GetAvailableGPUs();
+    std::cout << std::endl << "GPUS: " << available_gpus << std::endl;
     MultiplySignalsOnMultipleGPUs(first_transform, second_transform, signal_size, available_gpus);
 
     // NOTE: Multiplication results were written instead of first_transform
@@ -89,7 +90,7 @@ void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
         MultiplySignals<<<32, 256>>>(
                 (cufftComplex *) first_desc->descriptor->data[gpu_index],
                 (cufftComplex *) second_desc->descriptor->data[gpu_index],
-                signal_size
+                int (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex))
         );
     }
 

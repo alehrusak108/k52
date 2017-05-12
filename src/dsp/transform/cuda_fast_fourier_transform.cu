@@ -113,7 +113,6 @@ public:
         cufftResult result;
 
         cudaLibXtDesc *device_signal;
-
         result = cufftXtMalloc(cufft_execution_plan_, &device_signal, CUFFT_XT_FORMAT_INPLACE);
         CudaUtils::checkCufftErrors(result, "CUFFT FORWARD allocation across GPUs");
 
@@ -182,6 +181,19 @@ public:
 
         cufftXtMemcpy(cufft_execution_plan_, natural_ordered_transform, device_transform, CUFFT_COPY_DEVICE_TO_DEVICE);
         CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C memory copying from Device to Host");
+
+
+        cufftComplex *f = (cufftComplex *) malloc (natural_ordered_transform->descriptor->size[0]);
+        cufftXtMemcpy(cufft_execution_plan_, (void **) &f, natural_ordered_transform->descriptor->data[0], CUFFT_COPY_DEVICE_TO_HOST);
+        for (int i = 0; i < natural_ordered_transform->descriptor->size[0]; i++) {
+            std::cout << f[i].x << "\t" << f[i].y << std::endl;
+        }
+
+        cufftComplex *s = (cufftComplex *) malloc (natural_ordered_transform->descriptor->size[1]);
+        cufftXtMemcpy(cufft_execution_plan_, (void **) &s, natural_ordered_transform->descriptor->data[1], CUFFT_COPY_DEVICE_TO_HOST);
+        for (int i = 0; i < natural_ordered_transform->descriptor->size[1]; i++) {
+            std::cout << s[i].x << "\t" << s[i].y << std::endl;
+        }
 
         cufftXtFree(device_transform);
         return natural_ordered_transform;

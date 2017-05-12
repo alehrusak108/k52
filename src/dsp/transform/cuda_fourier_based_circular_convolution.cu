@@ -62,17 +62,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // to prevent from useless copying cufftComplex arrays into vector
     cudaLibXtDesc *first_transform =
             cufft_transformer_->DirectTransformLibXtDesc(first_signal);
-
-    cufftComplex *f = (cufftComplex *) first_transform->descriptor->data[0];
-    for (int i = 0; i < first_transform->descriptor->size[0]; i++) {
-        std::cout << f[i].x << "\t" << f[i].y << std::endl;
-    }
-
-    cufftComplex *s = (cufftComplex *) first_transform->descriptor->data[1];
-    for (int i = 0; i < first_transform->descriptor->size[1]; i++) {
-        std::cout << s[i].x << "\t" << s[i].y << std::endl;
-    }
-
     cudaLibXtDesc *second_transform =
             cufft_transformer_->DirectTransformLibXtDesc(second_signal);
 

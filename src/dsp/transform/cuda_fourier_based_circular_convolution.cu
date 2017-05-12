@@ -38,6 +38,8 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
         cufftComplex result_element;
         result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
         result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
+        result_element.x = result_element.x * (1.0f / signal_size);
+        result_element.x = result_element.y * (1.0f / signal_size);
         first[id] = result_element;
     }
 }
@@ -67,7 +69,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     // Perform Multiplication on several GPUs
     int available_gpus = cufft_transformer_->GetAvailableGPUs();
-    std::cout << std::endl << "GPUS: " << available_gpus << std::endl;
     MultiplySignalsOnMultipleGPUs(first_transform, second_transform, signal_size, available_gpus);
 
     // NOTE: Multiplication results were written instead of first_transform

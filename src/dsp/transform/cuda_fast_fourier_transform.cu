@@ -183,6 +183,8 @@ public:
         CudaUtils::checkCufftErrors(result, "CUFFT FORWARD LibXtDesc C2C memory copying from Device to Host");
 
         cufftXtFree(device_transform);
+        free(host_signal);
+
         return natural_ordered_transform;
     }
 
@@ -191,16 +193,15 @@ public:
     {
         cufftResult result;
 
-        clock_t execution_time = clock();
-
         // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        clock_t execution_time = clock();
         result = cufftXtExecDescriptorC2C(
                 cufft_execution_plan_,
                 device_signal,
                 device_signal,
                 CUFFT_INVERSE
         );
-        std::cout << std::endl << "CUFFT INVERSE Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
+        std::cout << std::endl << "CUFFT INVERSE LibXtDesc Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
         CudaUtils::checkCufftErrors(result, "CUFFT INVERSE LibXtDesc C2C execution");
 
         cufftComplex *host_transformed = (cufftComplex *) malloc (signal_memory_size_);

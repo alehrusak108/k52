@@ -40,7 +40,7 @@ void printComplexVector(vector<complex<double> > &vec)
     }
 }
 
-double CUFFTPerformanceTest(vector<complex<double> > &input_signal)
+void CUFFTPerformanceTest(vector<complex<double> > &input_signal)
 {
 
     ofstream test_output;
@@ -58,13 +58,12 @@ double CUFFTPerformanceTest(vector<complex<double> > &input_signal)
     vector<complex<double> > output = cufftTransformer.DirectTransform(input_signal);
 
     clock_t finish = clock() - execution_time;
-    test_output << endl << "Time elapsed for CUFFT Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    test_output << endl << "Time elapsed for CUFFT Transform Test: " << (double) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ CUFFT Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
-    return (double) finish / CLOCKS_PER_SEC;
 }
 
-double FFTWPerformanceTest(vector<complex<double> > &input_signal)
+void FFTWPerformanceTest(vector<complex<double> > &input_signal)
 {
 
     ofstream test_output;
@@ -81,23 +80,18 @@ double FFTWPerformanceTest(vector<complex<double> > &input_signal)
 
     vector<complex<double> > output = fftwTransformer.DirectTransform(input_signal);
 
-    clock_t finish = clock() - execution_time;
-    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
+    test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (double) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
     test_output << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;
     test_output.close();
-    return (double) finish / CLOCKS_PER_SEC;
 }
 
 vector<complex<double> > PrepareTestSignal(size_t signal_size)
 {
     vector<complex<double> > input_signal(signal_size);
     for (size_t index = 0; index < signal_size; index++) {
-        //input_signal[index].real(index);
-        //input_signal[index].imag(0);
         input_signal[index].real(-5 + rand() % 15);
         input_signal[index].imag(-5 + rand() % 15);
     }
-    //printComplexVector(input_signal);
     return input_signal;
 }
 
@@ -121,7 +115,7 @@ void CircularConvolutionTest() {
 
     cout << endl << "[ CONVOLUTION TEST STARTED ]" << endl;
 
-    size_t signal_size = 16777216;
+    size_t signal_size = 128;//16777216;
     cout << endl << "Signal Length is: " << signal_size << endl;
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);

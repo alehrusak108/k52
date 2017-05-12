@@ -39,7 +39,7 @@ private:
     // two more methods to perform FFT, that are very useful for convolution
     boost::shared_ptr<CudaFastFourierTransform> cufft_transformer_;
 
-    void MultiplySignalsOnMultipleGPUs(cudaLibXtDesc *, cudaLibXtDesc *, int, int) const;
+    void MultiplySignalsOnMultipleGPUs(cudaLibXtDesc *, cudaLibXtDesc *, float, int) const;
 };
 
 } // namespace dsp

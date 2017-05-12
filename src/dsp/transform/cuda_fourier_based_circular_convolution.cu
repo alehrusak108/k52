@@ -27,7 +27,7 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 
 // CUDA kernel function used to multiply two signals in parallel
 // NOTE: Result is written instead of first signal
-__global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size)
+__global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size, float scale)
 {
     // Elements of the result of signals multiplication are calculated in parallel
     // using thread_id variable - thread index.
@@ -38,8 +38,8 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
         cufftComplex result_element;
         result_element.x = first[thread_id].x * second[thread_id].x - first[thread_id].y * second[thread_id].y;
         result_element.y = first[thread_id].x * second[thread_id].y + first[thread_id].y * second[thread_id].x;
-        result_element.x = result_element.x * (1.0f / signal_size);
-        result_element.x = result_element.y * (1.0f / signal_size);
+        result_element.x = result_element.x * scale;
+        result_element.x = result_element.y * scale;
         first[id] = result_element;
     }
 }
@@ -69,7 +69,8 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     // Perform Multiplication on several GPUs
     int available_gpus = cufft_transformer_->GetAvailableGPUs();
-    MultiplySignalsOnMultipleGPUs(first_transform, second_transform, signal_size, available_gpus);
+    float scale = 1.0f / signal_size;
+    MultiplySignalsOnMultipleGPUs(first_transform, second_transform, scale, available_gpus);
 
     // NOTE: Multiplication results were written instead of first_transform
     vector<complex<double> > convolution =
@@ -81,7 +82,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 }
 
 void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
-        cudaLibXtDesc *first_desc, cudaLibXtDesc *second_desc, int signal_size, int gpu_count) const
+        cudaLibXtDesc *first_desc, cudaLibXtDesc *second_desc, float scale, int gpu_count) const
 {
     int device;
     for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
@@ -92,7 +93,8 @@ void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
         MultiplySignals<<<32, 256>>>(
                 (cufftComplex *) first_desc->descriptor->data[gpu_index],
                 (cufftComplex *) second_desc->descriptor->data[gpu_index],
-                int (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex))
+                int (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex)),
+                scale
         );
     }
 

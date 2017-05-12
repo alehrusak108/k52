@@ -22,7 +22,7 @@ using namespace k52::dsp;
 
 void printComplexVector(ofstream &output_file, vector<complex<double> > &vec)
 {
-    for (int i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < vec.size(); i++)
     {
         output_file << vec[i].real() << "\t" << vec[i].imag() << endl;
     }
@@ -30,7 +30,7 @@ void printComplexVector(ofstream &output_file, vector<complex<double> > &vec)
 
 void printComplexVector(vector<complex<double> > &vec)
 {
-    for (int i = 0; i < vec.size(); i++)
+    for (size_t i = 0; i < vec.size(); i++)
     {
         cout << vec[i].real() << "\t" << vec[i].imag() << endl;
     }

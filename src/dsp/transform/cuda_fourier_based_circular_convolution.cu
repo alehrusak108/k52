@@ -29,9 +29,9 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 // NOTE: Result is written instead of first signal
 __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size)
 {
-        // Elements of the result of signals multiplication are calculated in parallel
-        // using thread_id variable - thread index.
-        // Each thread calculates one element of result sequence at first[thread_id] moment.
+    // Elements of the result of signals multiplication are calculated in parallel
+    // using thread_id variable - thread index.
+    // Each thread calculates one element of result sequence at a moment.
     const int threads_count = blockDim.x * gridDim.x;
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     for (int id = thread_id; id < signal_size; id += threads_count) {
@@ -62,6 +62,17 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     // to prevent from useless copying cufftComplex arrays into vector
     cudaLibXtDesc *first_transform =
             cufft_transformer_->DirectTransformLibXtDesc(first_signal);
+
+    cufftComplex *f = (cufftComplex *) first_transform->descriptor->data[0];
+    for (int i = 0; i < first_transform->descriptor->size[0]; i++) {
+        std::cout << f[i].x << "\t" << f[i].y << std::endl;
+    }
+
+    cufftComplex *s = (cufftComplex *) first_transform->descriptor->data[1];
+    for (int i = 0; i < first_transform->descriptor->size[1]; i++) {
+        std::cout << s[i].x << "\t" << s[i].y << std::endl;
+    }
+
     cudaLibXtDesc *second_transform =
             cufft_transformer_->DirectTransformLibXtDesc(second_signal);
 
@@ -85,10 +96,7 @@ void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
     for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
     {
         device = first_desc->descriptor->GPUs[gpu_index];
-
-        // Set GPU
         cudaSetDevice(device);
-        // Perform GPU computations
         MultiplySignals<<<32, 256>>>(
                 (cufftComplex *) first_desc->descriptor->data[gpu_index],
                 (cufftComplex *) second_desc->descriptor->data[gpu_index],

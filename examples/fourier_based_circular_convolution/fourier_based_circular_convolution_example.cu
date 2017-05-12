@@ -69,13 +69,13 @@ double FFTWPerformanceTest(vector<complex<double> > &input_signal)
 
     clock_t planning_time = clock();
 
-    FastFourierTransform fftw3Transformer(input_signal.size());
+    FastFourierTransform fftwTransformer(input_signal.size());
 
     test_output << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
 
-    vector<complex<double> > output = fftw3Transformer.DirectTransform(input_signal);
+    vector<complex<double> > output = fftwTransformer.DirectTransform(input_signal);
 
     clock_t finish = clock() - execution_time;
     test_output << endl << "Time elapsed for FFTW3 Transform Test: " << (double) finish / CLOCKS_PER_SEC << " seconds " << endl << endl;
@@ -122,9 +122,16 @@ void CircularConvolutionTest() {
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);
 
-    CudaFourierBasedCircularConvolution cufftConvolutor(signal_size, CUFFT_EXECUTIONS_PLANNED);
-    vector<complex<double> > convolution = cufftConvolutor.EvaluateConvolution(first_signal, second_signal);
-    printComplexVector(convolution);
+    CudaFourierBasedCircularConvolution cufft_convolutor(signal_size, CUFFT_EXECUTIONS_PLANNED);
+    vector<complex<double> > cufft_result = cufft_convolutor.EvaluateConvolution(first_signal, second_signal);
+    cout << endl << "CUFFT CONVOLUTION: " << endl << endl;
+    printComplexVector(cufft_result);
+
+    FastFourierTransform fftw_transformer(signal_size);
+    FourierBasedCircularConvolution fftw_convolutor(fftw_transformer);
+    vector<complex<double> > fftw_result = fftw_convolutor.EvaluateConvolution(first_signal, second_signal);
+    cout << endl << "FFTW CONVOLUTION: " << endl << endl;
+    printComplexVector(fftw_result);
 
     test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
     test_output.close();

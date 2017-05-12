@@ -120,7 +120,7 @@ void CircularConvolutionTest() {
     ofstream test_output;
     test_output.open("convolution_test.txt", ios::out | ios::app);
 
-    size_t signal_size = 128;
+    size_t signal_size = 64;
     test_output << endl << "Signal Length is: " << signal_size << endl;
     vector<complex<double> > first_signal = PrepareTestSignal(signal_size);
     vector<complex<double> > second_signal = PrepareTestSignal(signal_size);

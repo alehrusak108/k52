@@ -1,6 +1,7 @@
 #include <k52/dsp/transform/i_fourier_transform.h>
 #include <k52/dsp/transform/fast_fourier_transform.h>
 #include <k52/dsp/transform/fourier_based_circular_convolution.h>
+#include <k52/dsp/transform/circular_convolution.h>
 
 #include <boost/smart_ptr/shared_ptr.hpp>
 
@@ -139,6 +140,11 @@ void CircularConvolutionTest() {
     vector<complex<double> > fftw_result = fftw_convolutor->EvaluateConvolution(first_signal, second_signal);
     cout << endl << "FFTW CONVOLUTION: " << endl << endl;
     printComplexVector(fftw_result);
+
+    ICircularConvolution *simple_convolutor = new CircularConvolution();
+    vector<complex<double> > simple_result = simple_convolutor->EvaluateConvolution(first_signal, second_signal);
+    cout << endl << "SIMPLE MULTIPLICATION: " << endl << endl;
+    printComplexVector(simple_result);
 
     test_output << endl << "-----------------------------------------------------------------------" << endl << endl;
     test_output.close();

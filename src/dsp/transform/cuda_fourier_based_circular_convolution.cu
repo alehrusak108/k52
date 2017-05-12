@@ -27,7 +27,8 @@ using ::k52::dsp::CudaFourierBasedCircularConvolution;
 
 // CUDA kernel function used to multiply two signals in parallel
 // NOTE: Result is written instead of first signal
-__global__ void MultiplySignals(cufftComplex *a, cufftComplex *b, int signal_size, float scale)
+// TODO: Why CUFFT doesn't scale result signal on it's length, but FFTW does?
+__global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size, float scale)
 {
     // Elements of the result of signals multiplication are calculated in parallel
     // using thread_id variable - thread index.
@@ -35,11 +36,11 @@ __global__ void MultiplySignals(cufftComplex *a, cufftComplex *b, int signal_siz
     const int threads_count = blockDim.x * gridDim.x;
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     for (int id = thread_id; id < signal_size; id += threads_count) {
-        cufftComplex c;
-        c.x = a[id].x * b[id].x - a[id].y * b[id].y;
-        c.y = a[id].x * b[id].y + a[id].y * b[id].x;
-        a[id].x = c.x * scale;
-        a[id].y = c.y * scale;
+        cufftComplex result;
+        result.x = (first[id].x * second[id].x - first[id].y * second[id].y);
+        result.y = (first[id].x * second[id].y + first[id].y * second[id].x);
+        first[id].x = result.x * scale;
+        first[id].y = result.y * scale;
     }
 }
 

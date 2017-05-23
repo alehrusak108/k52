@@ -60,14 +60,26 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
     test_output.open("test_output.txt", ios::out | ios::app);
     cout << "[ FFTW3 Performance TEST ] STARTED." << endl;
 
+    size_t page_size = 262144;
+    int total_pages = input_signal.size() / page_size;
+
     clock_t planning_time = clock();
-
-    FastFourierTransform fftwTransformer(input_signal.size());
-
+    FastFourierTransform fftwTransformer(page_size);
     cout << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
-    vector<complex<double> > output = fftwTransformer.DirectTransform(input_signal);
+    for (unsigned int page_number = 0; page_number < total_pages; page_number++)
+    {
+        size_t start_index = page_size * page_number;
+        size_t end_index = start_index + page_size;
+        vector<complex<double> >::const_iterator page_start = input_signal.begin() + start_index;
+        vector<complex<double> >::const_iterator page_end = input_signal.begin() + end_index;
+        vector<complex<double> > signal_page(page_start, page_end);
+
+        FastFourierTransform fftwTransformer(page_size);
+        vector<complex<double> > output = fftwTransformer.DirectTransform(signal_page);
+    }
+
     cout << endl << endl << "Time elapsed for FFTW3 Transform Test: " << (double) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
 
     cout << "[ FFTW3 Performance TEST ] FINISHED." << endl << endl;

@@ -86,7 +86,7 @@ public:
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             cudaError cuda_result;
-            cuda_result = cudaMemcpy(host_signal_page_, (const void *) device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
+            cuda_result = cudaMemcpy(host_signal_page_, (const void **) &device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
         }
     }

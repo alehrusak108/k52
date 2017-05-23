@@ -24,7 +24,9 @@ class CudaUtils
 
 public:
 
-    static cufftComplex* VectorToCufftComplex(const vector<complex<double> > &sequence);
+    static cufftComplex* VectorToCufftComplexAlloc(const vector<complex<double> > &sequence);
+
+    static void VectorToCufftComplex(const vector<complex<double> > &sequence, cufftComplex *cufft_sequence);
 
     static vector<complex<double> > CufftComplexToVector(cufftComplex *cufft_complex_sequence, int sequence_size);
 

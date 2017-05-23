@@ -36,9 +36,9 @@ namespace dsp
 // Initializes given pointer to signal page with signal data using "begin" and "end" indexes
 __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int begin, int end)
 {
-    const int threads_count = blockDim.x * gridDim.x;
-    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    for (int id = thread_id; id < end - begin; id += threads_count) {
+    /*const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;*/
+    for (int id = 0; id < end - begin; id++) {
         page[id].x = signal[begin + id].x;
         page[id].y = signal[begin + id].y;
     }
@@ -47,9 +47,9 @@ __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, i
 // Copies given pointer to signal page into signal using "begin" and "end" indexes
 __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int begin, int end)
 {
-    const int threads_count = blockDim.x * gridDim.x;
-    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    for (int id = thread_id; id < end - begin; id += threads_count) {
+    /*const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;*/
+    for (int id = 0; id < end - begin; id ++) {
         signal[begin + id].x = page[id].x;
         signal[begin + id].y = page[id].y;
     }
@@ -68,12 +68,12 @@ public:
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
-        if (signal_.size() % page_size != 0)
+        if (signal.size() <= 0)
         {
             throw std::invalid_argument("CUDA FFT FATAL: Modulo of sequence_size with page_size should be 0.");
         }
 
-        signal_size_ = signal_.size();
+        signal_size_ = signal.size();
         total_pages_ = signal_size_ / page_size_;
 
         cudaSetDevice(0);

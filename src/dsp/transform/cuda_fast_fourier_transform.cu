@@ -106,14 +106,12 @@ public:
             vector<complex<double> > signal_page(page_start, page_end);
 
             // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
-            clock_t execution_time = clock();
             cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
                     (device_signal_ + start_index),
                     (device_signal_ + end_index),
                     transform_direction
             );
-            std::cout << std::endl << "CUFFT FORWARD Transformation finished in: " << (float) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << std::endl;
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
         }
     }

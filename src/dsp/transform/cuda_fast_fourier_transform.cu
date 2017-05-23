@@ -116,10 +116,11 @@ public:
         }
     }
 
-    vector<complex<double> > GetTransformResult() const
+    vector<complex<double> > GetTransformResult()
     {
         // Copy whole device memory (FFT calculation results - device_signal) to Host memory (RAM)
         cudaError cuda_result;
+        host_signal_ = (cufftComplex *) malloc (signal_memory_size_);
         cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_, cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
 
@@ -166,7 +167,7 @@ void CudaFastFourierTransform::InverseTransform()
     cuda_fast_fourier_transform_impl_->InverseTransform();
 }
 
-vector<complex<double> > CudaFastFourierTransform::GetTransformResult() const
+vector<complex<double> > CudaFastFourierTransform::GetTransformResult()
 {
     return cuda_fast_fourier_transform_impl_->GetTransformResult();
 }

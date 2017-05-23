@@ -37,7 +37,7 @@ public:
 
     void InverseTransform();
 
-    vector<complex<double> > GetTransformResult() const;
+    vector<complex<double> > GetTransformResult();
 
 private:
 

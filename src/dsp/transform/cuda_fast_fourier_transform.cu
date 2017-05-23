@@ -142,7 +142,7 @@ public:
         result.reserve(signal_size_);
         cudaError cuda_result;
         cufftComplex **host_result = (cufftComplex **) malloc (page_size_ * total_pages_ * sizeof(cufftComplex*));
-        cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_, total_pages_, cudaMemcpyDeviceToHost);
+        cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_, page_size_ * total_pages_, cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying Matrix of execution results from Device to Host");
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {

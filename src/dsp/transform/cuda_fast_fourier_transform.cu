@@ -100,7 +100,7 @@ public:
 
         for (unsigned int page_number = 0; page_number < total_pages; page_number++) {
             size_t start_index = page_size_ * page_number;
-            size_t end_index = start_index + page_size_;
+            size_t end_index = start_index + page_size_ - 1;
             vector<complex<double> >::const_iterator page_start = signal_.begin() + start_index;
             vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
             vector<complex<double> > signal_page(page_start, page_end);

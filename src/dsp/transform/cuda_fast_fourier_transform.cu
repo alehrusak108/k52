@@ -93,7 +93,8 @@ public:
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             cudaError cuda_result = cudaFree(device_signal_pages_[page_number]);
-            CudaUtils::checkErrors(cuda_result, "cudaFree FAILED ");
+            CudaUtils::checkErrors(cuda_result, "cudaFree ");
+            std::cout << page_number << std::endl;
         }
 
         free(host_signal_page_);

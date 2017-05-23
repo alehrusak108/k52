@@ -90,11 +90,11 @@ public:
         cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
         CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
 
-        /*for (size_t page_number = 0; page_number < total_pages_; page_number++)
+        for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
-            cudaError cuda_result = cudaFree(device_signal_pages_[page_number]);
+            cudaError cuda_result = cudaFree(&device_signal_pages_[page_number]);
             CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree");
-        }*/
+        }
 
         free(host_signal_page_);
 

@@ -67,6 +67,8 @@ public:
 
             host_signal_page_ = CudaUtils::VectorToCufftComplex(signal_page);
 
+            device_signal_pages_ = (cufftComplex **) malloc(sizeof(cufftComplex) * page_size_);
+
             cudaError cuda_result;
             cuda_result = cudaMalloc((void **) &device_signal_pages_[page_number], sizeof(cufftComplex) * page_size_);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation on single GPU");

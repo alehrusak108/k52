@@ -130,12 +130,12 @@ public:
     vector<complex<double> > GetTransformResult()
     {
         vector<complex<double> > result(signal_size_);
-        for (unsigned int page_number = 0; page_number < total_pages_; page_number++)
+        /*for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             cudaError cuda_result;
             cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-        }
+        }*/
         return result;
     }
 

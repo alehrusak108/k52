@@ -14,6 +14,7 @@
 #include "../../../../../../../usr/local/cuda/include/cufft.h"
 #include "../../../../../../../usr/local/cuda/include/cufftXt.h"
 #include "../../../../../../../usr/local/cuda/include/cuda_runtime_api.h"
+#include "../../../../../../../usr/local/cuda/include/device_launch_parameters.h"
 
 // TODO: DELETE THIS IMPORTS!
 
@@ -31,10 +32,32 @@ namespace dsp
 
 #ifdef BUILD_WITH_CUDA
 
+__global__ void MultiplySignals(cufftHandle cufft_execution_plan,
+                                cufftComplex **device_signal_pages_,
+                                size_t total_pages,
+                                int transform_direction)
+{
+    // Elements of the result of signals multiplication are calculated in parallel
+    // using thread_id variable - thread index.
+    // Each thread calculates one element of result sequence at a moment.
+    const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    for (size_t page_number = thread_id; page_number < total_pages; page_number += threads_count)
+    {
+        // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
+        cufftResult cufft_result = cufftExecC2C(
+                cufft_execution_plan,
+                device_signal_pages_[page_number],
+                device_signal_pages_[page_number],
+                transform_direction
+        );
+        CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
+    }
+}
+
 // Using pImpl approach to hide CUFFT from outside use
 // NOTE: Prefix "device_" means that variable is allocated in CUDA Device Memory
 //       Prefix "host_" means that variable is allocated in RAM (Host)
-
 class CudaFastFourierTransform::CudaFastFourierTransformImpl
 {
 
@@ -120,20 +143,8 @@ public:
     void Transform(int transform_direction)
     {
         cufftResult cufft_result;
-
         cudaSetDevice(0);
-
-        for (unsigned int page_number = 0; page_number < total_pages_; page_number++)
-        {
-            // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
-            cufft_result = cufftExecC2C(
-                    cufft_execution_plan_,
-                    device_signal_pages_[page_number],
-                    device_signal_pages_[page_number],
-                    transform_direction
-            );
-            CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
-        }
+        MultiplySignals<<<64, 128>>>(cufft_execution_plan_, device_signal_pages_, total_pages_, transform_direction);
     }
 
     vector<complex<double> > GetTransformResult()

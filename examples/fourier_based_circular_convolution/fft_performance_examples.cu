@@ -89,7 +89,7 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
 int main(int argc, char* argv[]) {
     ofstream test_output;
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
-    int signal_size = 8388608;
+    int signal_size = 33554432;
     //for (int test_index = 1; test_index <= 8; test_index++) {
         vector<complex<double> > input_signal = Helpers::GenerateComplexSignal(signal_size);
         //test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;

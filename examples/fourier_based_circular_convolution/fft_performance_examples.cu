@@ -47,7 +47,7 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
     cufftTransformer.DirectTransform();
     vector<complex<double> > output = cufftTransformer.GetTransformResult();
 
-    Helpers::PrintComplexVector(output);
+    //Helpers::PrintComplexVector(output);
 
     clock_t finish = clock() - execution_time;
     cout << endl << "Time elapsed for CUFFT Transform Test: " << (double) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;
@@ -91,7 +91,7 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
 int main(int argc, char* argv[]) {
     ofstream test_output;
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
-    int signal_size = 128;
+    int signal_size = 64;
     //for (int test_index = 1; test_index <= 8; test_index++) {
         vector<complex<double> > input_signal = Helpers::GenerateComplexSignal(signal_size);
         //test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;

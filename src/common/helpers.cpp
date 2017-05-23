@@ -65,7 +65,7 @@ vector<complex<double> > Helpers::GenerateComplexSignal(size_t signal_size)
     int var = 0;
     for (size_t index = 0; index < signal_size; index++)
     {
-        if (index % 8 == 0) {
+        if ((index + 1) % 8 == 0) {
             var = 0;
         } else {
             var++;

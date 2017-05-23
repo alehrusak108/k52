@@ -11,6 +11,7 @@
 #include <cuda_runtime_api.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
+#include <k52/common/helpers.h>
 #include "../../../../../../../usr/local/cuda/include/cufft.h"
 #include "../../../../../../../usr/local/cuda/include/cufftXt.h"
 #include "../../../../../../../usr/local/cuda/include/cuda_runtime_api.h"
@@ -69,7 +70,7 @@ public:
         for (unsigned int page_number = 0; page_number < total_pages_; page_number++)
         {
             size_t start_index = page_size_ * page_number;
-            size_t end_index = start_index + page_size_ - 1;
+            size_t end_index = start_index + page_size_;
             vector<complex<double> >::const_iterator page_start = signal_.begin() + start_index;
             vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
             vector<complex<double> > signal_page(page_start, page_end);
@@ -142,6 +143,7 @@ public:
             cudaError cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
             vector<complex<double> > page_vector = CudaUtils::CufftComplexToVector(host_signal_page_, page_size_);
+            k52::common::Helpers::PrintComplexVector(page_vector);
             result.insert(result.end(), page_vector.begin(), page_vector.end());
         }
         return result;

@@ -67,7 +67,7 @@ public:
 
         device_signal_pages_ = (cufftComplex **) malloc(total_pages_ * sizeof(cufftComplex*));
         host_signal_page_ = (cufftComplex *) malloc(page_size_ * sizeof(cufftComplex));
-        for (unsigned int page_number = 0; page_number < total_pages_; page_number++)
+        for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             size_t start_index = page_size_ * page_number;
             size_t end_index = start_index + page_size_;
@@ -89,8 +89,6 @@ public:
     ~CudaFastFourierTransformImpl() {
 
         std::cout << "Destroying CUFFT Context..." << std::endl << std::endl;
-
-        cudaSetDevice(0);
 
         cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
         CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
@@ -120,7 +118,6 @@ public:
 
     void Transform(int transform_direction)
     {
-        cudaSetDevice(0);
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             cufftResult cufft_result = cufftExecC2C(
@@ -135,7 +132,6 @@ public:
 
     vector<complex<double> > GetTransformResult()
     {
-        cudaSetDevice(0);
         vector<complex<double> > result;
         result.reserve(signal_size_);
         for (size_t page_number = 0; page_number < total_pages_; page_number++)

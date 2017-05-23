@@ -83,6 +83,12 @@ public:
             cuda_result = cudaMemcpy(device_signal_pages_[page_number], host_signal_page_, page_size_, cudaMemcpyHostToDevice);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
         }
+        for (size_t page_number = 0; page_number < total_pages_; page_number++)
+        {
+            cudaError cuda_result;
+            cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
+            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
+        }
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -138,20 +144,13 @@ public:
 
     vector<complex<double> > GetTransformResult()
     {
-        vector<complex<double> > result;
-        result.reserve(signal_size_);
+        vector<complex<double> > result(signal_size_);
         cudaError cuda_result;
-        cufftComplex **host_result = (cufftComplex **) malloc (page_size_ * total_pages_ * sizeof(cufftComplex*));
-        cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_, page_size_, cudaMemcpyDeviceToHost);
-        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying Matrix of execution results from Device to Host");
-        for (size_t page_number = 0; page_number < total_pages_; page_number++)
+        /*for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
-            cuda_result = cudaMemcpy(host_result[page_number], device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
+            cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-            vector<complex<double> > page = CudaUtils::CufftComplexToVector(host_result[page_number], page_size_);
-            result.insert(result.end(), page.begin(), page.end());
-        }
-
+        }*/
         return result;
     }
 

@@ -71,7 +71,9 @@ public:
         {
             size_t start_index = page_size_ * page_number;
             size_t end_index = start_index + page_size_;
-            vector<complex<double> > signal_page(signal_[start_index], signal_[end_index]);
+            vector<complex<double> >::const_iterator page_start = signal_.begin() + start_index;
+            vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
+            vector<complex<double> > signal_page(page_start, page_end);
 
             k52::common::Helpers::PrintComplexVector(signal_page);
 

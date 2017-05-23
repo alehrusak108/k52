@@ -34,7 +34,7 @@ list(APPEND CMAKE_CXX_FLAGS -O3 -Wall)
 
 # Add CUDA FFT Test executable - similar as for C++ Compiler
 # Example is *.cu file, because it consists both of C++ code and CUDA C code
-set(CUDA_SOURCE fourier_based_circular_convolution_example.cu)
+set(CUDA_SOURCE fft_performance_examples.cu)
 cuda_add_executable(${PROJECT_NAME} ${CUDA_SOURCE})
 
 # And link all the executables against k52_LIBRARIES which already includes additionally

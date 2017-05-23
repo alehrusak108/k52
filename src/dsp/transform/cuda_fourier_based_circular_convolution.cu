@@ -11,9 +11,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
 #include <k52/dsp/transform/util/cuda_utils.h>
-#include "../../../../../../../usr/local/cuda/include/cuda_runtime_api.h"
 #include "../../../../../../../usr/local/cuda/include/device_launch_parameters.h"
-#include "../../../../../../../usr/local/cuda/include/cufftXt.h"
 
 // TODO: DELETE THIS IMPORTS - THEY ARE ONLY FOR CLION COMPILATION PURPOSE
 
@@ -46,7 +44,7 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
 
 CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t sequence_size, int batch_size)
 {
-    cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(sequence_size, batch_size);
+    //cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(sequence_size, batch_size);
 }
 
 vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolution(
@@ -58,7 +56,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
         throw std::runtime_error("Can evaluate convolution only for sequences of the same size.");
     }
 
-    size_t signal_size = first_signal.size();
+    /*size_t signal_size = first_signal.size();
 
     // Here are used additional CudaFastFourierTransform methods
     // to prevent from useless copying cufftComplex arrays into vector
@@ -76,35 +74,10 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     vector<complex<double> > convolution =
             cufft_transformer_->InverseTransformLibXtDesc(first_transform, signal_size);
 
-    cufftXtFree(second_transform);
+    cufftXtFree(second_transform);*/
 
+    vector<complex<double> > convolution;
     return convolution;
-}
-
-void CudaFourierBasedCircularConvolution::MultiplySignalsOnMultipleGPUs(
-        cudaLibXtDesc *first_desc, cudaLibXtDesc *second_desc, float scale, int gpu_count) const
-{
-    int device;
-    for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
-    {
-        device = first_desc->descriptor->GPUs[gpu_index];
-        cudaError error = cudaSetDevice(device);
-        CudaUtils::checkErrors(error, "MultiplySignals set GPU");
-        MultiplySignals<<<32, 256>>>(
-                (cufftComplex *) first_desc->descriptor->data[gpu_index],
-                (cufftComplex *) second_desc->descriptor->data[gpu_index],
-                (int) (first_desc->descriptor->size[gpu_index] / sizeof(cufftComplex)),
-                scale
-        );
-    }
-
-    // Wait for device to finish all operation
-    for (int gpu_index = 0; gpu_index < gpu_count; gpu_index++)
-    {
-        device = first_desc->descriptor->GPUs[gpu_index];
-        cudaSetDevice(device);
-        cudaDeviceSynchronize();
-    }
 }
 
 #endif //BUILD_WITH_CUDA

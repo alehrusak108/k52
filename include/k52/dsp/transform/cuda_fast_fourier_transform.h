@@ -21,7 +21,7 @@ namespace dsp
 
 #ifdef BUILD_WITH_CUDA
 
-class CudaFastFourierTransform : public IFourierTransform
+class CudaFastFourierTransform
 {
 
 public:
@@ -29,23 +29,16 @@ public:
     // IMPORTANT: Be ware of "executions_planned" number as far as
     // CUFFT performs memory allocations for Planning
     // and it strictly depends on number of planned CUFFT executions
-    CudaFastFourierTransform(size_t sequence_size, int executions_planned);
+    CudaFastFourierTransform(vector<complex<double> > sequence, size_t page_size);
 
     ~CudaFastFourierTransform();
 
-    virtual vector<complex<double> > DirectTransform(
-            const vector<complex<double> > &sequence) const;
+    void DirectTransform();
 
-    virtual vector<complex<double> > InverseTransform(
-            const vector<complex<double> > &sequence) const;
+    void InverseTransform();
 
-    virtual cudaLibXtDesc* DirectTransformLibXtDesc(
-            const vector<complex<double> > &sequence) const;
+    vector<complex<double> > GetTransformResult() const;
 
-    virtual vector<complex<double> > InverseTransformLibXtDesc(
-            cudaLibXtDesc *, int) const;
-
-    virtual int GetAvailableGPUs() const;
 private:
 
     class CudaFastFourierTransformImpl;

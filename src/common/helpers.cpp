@@ -1,8 +1,11 @@
 #include <k52/common/helpers.h>
 #include <iostream>
+#include <fstream>
+#include <cstdlib>
 
 using ::std::complex;
 using ::std::vector;
+using ::std::ofstream;
 using ::std::cout;
 using ::std::endl;
 
@@ -38,6 +41,33 @@ void Helpers::PrintVector(const std::vector<double>& values)
         }
     }
     cout << " ]" << endl;
+}
+
+void Helpers::PrintComplexVector(ofstream &output_file, vector<complex<double> > &vec)
+{
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        output_file << vec[i].real() << "\t" << vec[i].imag() << endl;
+    }
+}
+
+void Helpers::PrintComplexVector(vector<complex<double> > &vec)
+{
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        cout << vec[i].real() << "\t" << vec[i].imag() << endl;
+    }
+}
+
+vector<complex<double> > Helpers::GenerateComplexSignal(size_t signal_size)
+{
+    vector<complex<double> > input_signal(signal_size);
+    for (size_t index = 0; index < signal_size; index++)
+    {
+        input_signal[index].real(-5 + rand() % 15);
+        input_signal[index].imag(-5 + rand() % 15);
+    }
+    return input_signal;
 }
 
 }/* namespace common */

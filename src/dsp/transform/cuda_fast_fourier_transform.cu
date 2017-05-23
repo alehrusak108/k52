@@ -53,6 +53,8 @@ public:
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
         total_pages_ = signal_size_ / page_size_;
 
+        cudaSetDevice(0);
+
         std::cout << std::endl << "Constructing the CUFFT Context with the following parameters: " << std::endl
                   << "Signal Size: " << signal_size_ << std::endl
                   << "Page Size: " << page_size_ << std::endl
@@ -87,12 +89,14 @@ public:
 
         std::cout << "Destroying CUFFT Context..." << std::endl << std::endl;
 
+        cudaSetDevice(0);
+
         cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
         CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
 
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
-            cudaError cuda_result = cudaFree(&device_signal_pages_[page_number]);
+            cudaError cuda_result = cudaFree(device_signal_pages_[page_number]);
             CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree");
         }
 
@@ -117,6 +121,8 @@ public:
     {
         cufftResult cufft_result;
 
+        cudaSetDevice(0);
+
         for (unsigned int page_number = 0; page_number < total_pages_; page_number++)
         {
             // NOTE: Transformed signal will be written instead of source signal to escape memory wasting
@@ -132,13 +138,20 @@ public:
 
     vector<complex<double> > GetTransformResult()
     {
-        vector<complex<double> > result(signal_size_);
-        /*for (size_t page_number = 0; page_number < total_pages_; page_number++)
+        vector<complex<double> > result;
+        result.reserve(signal_size_);
+        cudaError cuda_result;
+        cufftComplex **host_result = (cufftComplex **) malloc (page_size_ * total_pages_ * sizeof(cufftComplex*));
+        cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_, total_pages_, cudaMemcpyDeviceToHost);
+        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying Matrix of execution results from Device to Host");
+        for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
-            cudaError cuda_result;
-            cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
+            cuda_result = cudaMemcpy(host_result[page_number], device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-        }*/
+            vector<complex<double> > page = CudaUtils::CufftComplexToVector(host_result[page_number], page_size_);
+            result.insert(result.end(), page.begin(), page.end());
+        }
+
         return result;
     }
 

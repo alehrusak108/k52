@@ -75,14 +75,15 @@ public:
             vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
             vector<complex<double> > signal_page(page_start, page_end);
 
-            k52::common::Helpers::PrintComplexVector(signal_page);
-
             cudaError cuda_result;
             cuda_result = cudaMalloc((void **) &device_signal_pages_[page_number], sizeof(cufftComplex) * page_size_);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation on single GPU");
 
             // Copy the whole signal to Device
             CudaUtils::VectorToCufftComplex(signal_page, host_signal_page_);
+            for (int i = 0; i < 8; i++) {
+                std::cout << host_signal_page_[i].x << "\t" << host_signal_page_[i].y << std::endl;
+            }
             cuda_result = cudaMemcpy(device_signal_pages_[page_number], host_signal_page_, page_size_, cudaMemcpyHostToDevice);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
         }

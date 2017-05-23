@@ -14,7 +14,7 @@ using ::std::string;
 
 #ifdef BUILD_WITH_CUDA
 
-cufftComplex *CudaUtils::VectorToCufftComplex(const vector<complex<double> > &sequence)
+cufftComplex *CudaUtils::VectorToCufftComplexAlloc(const vector<complex<double> > &sequence)
 {
     int signal_size = sequence.size();
     cufftComplex* cufft_sequence = (cufftComplex *) malloc(sizeof(cufftComplex) * signal_size);
@@ -24,6 +24,16 @@ cufftComplex *CudaUtils::VectorToCufftComplex(const vector<complex<double> > &se
         cufft_sequence[n].y = sequence[n].imag();
     }
     return cufft_sequence;
+}
+
+void CudaUtils::VectorToCufftComplex(const vector<complex<double> > &sequence, cufftComplex *cufft_sequence)
+{
+    int signal_size = sequence.size();
+    for (size_t n = 0; n < signal_size; ++n)
+    {
+        cufft_sequence[n].x = sequence[n].real();
+        cufft_sequence[n].y = sequence[n].imag();
+    }
 }
 
 vector<complex<double> > CudaUtils::CufftComplexToVector(cufftComplex *cufft_sequence, int sequence_size)

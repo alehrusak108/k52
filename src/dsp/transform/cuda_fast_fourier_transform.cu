@@ -33,6 +33,28 @@ namespace dsp
 
 #ifdef BUILD_WITH_CUDA
 
+// Initializes given pointer to signal page with signal data using "begin" and "end" indexes
+__global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int begin, int end)
+{
+    const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    for (int id = thread_id; id < end - begin; id += threads_count) {
+        page[id].x = signal[begin + id].x;
+        page[id].y = signal[begin + id].y;
+    }
+}
+
+// Copies given pointer to signal page into signal using "begin" and "end" indexes
+__global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int begin, int end)
+{
+    const int threads_count = blockDim.x * gridDim.x;
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    for (int id = thread_id; id < end - begin; id += threads_count) {
+        signal[begin + id].x = page[id].x;
+        signal[begin + id].y = page[id].y;
+    }
+}
+
 // Using pImpl approach to hide CUFFT from outside use
 // NOTE: Prefix "device_" means that variable is allocated in CUDA Device Memory
 //       Prefix "host_" means that variable is allocated in RAM (Host)
@@ -41,7 +63,7 @@ class CudaFastFourierTransform::CudaFastFourierTransformImpl
 
 public:
     CudaFastFourierTransformImpl(vector<complex<double> > signal, size_t page_size)
-            : signal_(signal), page_size_(page_size)
+            : page_size_(page_size)
     {
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
@@ -65,25 +87,14 @@ public:
         cufftResult = cufftPlan1d(&cufft_execution_plan_, page_size_, CUFFT_C2C, BATCH_COUNT_);
         CudaUtils::checkCufftErrors(cufftResult, "CUFFT Create Plan");
 
-        device_signal_pages_ = (cufftComplex **) malloc(total_pages_ * sizeof(cufftComplex*));
-        host_signal_page_ = (cufftComplex *) malloc(page_size_ * sizeof(cufftComplex));
-        for (size_t page_number = 0; page_number < total_pages_; page_number++)
-        {
-            size_t start_index = page_size_ * page_number;
-            size_t end_index = start_index + page_size_;
-            vector<complex<double> >::const_iterator page_start = signal_.begin() + start_index;
-            vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
-            vector<complex<double> > signal_page(page_start, page_end);
+        cudaError cuda_result;
+        cuda_result = cudaMalloc((void **) &device_signal_, sizeof(cufftComplex) * signal_size_);
+        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation on single GPU");
 
-            cudaError cuda_result;
-            cuda_result = cudaMalloc((void **) &device_signal_pages_[page_number], sizeof(cufftComplex) * page_size_);
-            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation on single GPU");
-
-            // Copy the whole signal to Device
-            CudaUtils::VectorToCufftComplex(signal_page, host_signal_page_);
-            cuda_result = cudaMemcpy(device_signal_pages_[page_number], host_signal_page_, page_size_, cudaMemcpyHostToDevice);
-            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
-        }
+        // Copy the whole signal to Device
+        host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
+        cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_size_, cudaMemcpyHostToDevice);
+        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -93,13 +104,10 @@ public:
         cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
         CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
 
-        for (size_t page_number = 0; page_number < total_pages_; page_number++)
-        {
-            cudaError cuda_result = cudaFree(device_signal_pages_[page_number]);
-            CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree");
-        }
+        cudaError cuda_result = cudaFree(device_signal_);
+        CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree");
 
-        free(host_signal_page_);
+        free(host_signal_);
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
@@ -118,34 +126,38 @@ public:
 
     void Transform(int transform_direction)
     {
+        // MAKE device_signal 1D and copy arrays in __global__function
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
+            cufftComplex *signal_page;
+            cudaError cuda_result;
+            cuda_result = cudaMalloc((void **) &signal_page, sizeof(cufftComplex) * page_size_);
+            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Signal Page allocation");
+
+            size_t start_index = page_size_ * page_number;
+            size_t end_index = start_index + page_size_;
+            InitializeSignalPage<<<64, 128>>>(signal_page, device_signal_, start_index, end_index);
+
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
-                    device_signal_pages_[page_number],
-                    device_signal_pages_[page_number],
+                    signal_page,
+                    signal_page,
                     transform_direction
             );
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
+
+            CopyPageToSignal<<<64, 128>>>(device_signal_, signal_page, start_index, end_index);
         }
     }
 
     vector<complex<double> > GetTransformResult()
     {
-        vector<complex<double> > result;
-        result.reserve(signal_size_);
-        for (size_t page_number = 0; page_number < total_pages_; page_number++)
-        {
-            cufftComplex *host = (cufftComplex *) malloc (page_size_ * sizeof(cufftComplex));
-            cudaError cuda_result = cudaMemcpy(host, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
-            for (int i = 0; i < 8; i++) {
-                std::cout << host[i].x << "\t" << host[i].y << std::endl;
-            }
-            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-            vector<complex<double> > page_vector = CudaUtils::CufftComplexToVector(host, page_size_);
-            result.insert(result.end(), page_vector.begin(), page_vector.end());
+        cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_, cudaMemcpyDeviceToHost);
+        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
+        for (int i = 0; i < 8; i++) {
+            std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
         }
-        return result;
+        return CudaUtils::CufftComplexToVector(host_signal_, signal_size_);
     }
 
 private:
@@ -160,8 +172,8 @@ private:
     size_t page_size_;
     int total_pages_;
 
-    cufftComplex **device_signal_pages_;
-    cufftComplex *host_signal_page_;
+    cufftComplex *device_signal_;
+    cufftComplex *host_signal_;
     cufftHandle cufft_execution_plan_;
 };
 

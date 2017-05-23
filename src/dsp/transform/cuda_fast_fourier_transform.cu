@@ -81,9 +81,6 @@ public:
 
             // Copy the whole signal to Device
             CudaUtils::VectorToCufftComplex(signal_page, host_signal_page_);
-            for (int i = 0; i < 8; i++) {
-                std::cout << host_signal_page_[i].x << "\t" << host_signal_page_[i].y << std::endl;
-            }
             cuda_result = cudaMemcpy(device_signal_pages_[page_number], host_signal_page_, page_size_, cudaMemcpyHostToDevice);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
         }
@@ -144,9 +141,11 @@ public:
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             cudaError cuda_result = cudaMemcpy(host_signal_page_, device_signal_pages_[page_number], page_size_, cudaMemcpyDeviceToHost);
+            for (int i = 0; i < 8; i++) {
+                std::cout << host_signal_page_[i].x << "\t" << host_signal_page_[i].y << std::endl;
+            }
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
             vector<complex<double> > page_vector = CudaUtils::CufftComplexToVector(host_signal_page_, page_size_);
-            k52::common::Helpers::PrintComplexVector(page_vector);
             result.insert(result.end(), page_vector.begin(), page_vector.end());
         }
         return result;

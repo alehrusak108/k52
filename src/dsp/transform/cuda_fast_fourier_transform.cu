@@ -53,6 +53,11 @@ public:
         signal_memory_size_ = sizeof(cufftComplex) * signal_size_;
         total_pages_ = signal_size_ / page_size_;
 
+        std::cout << std::endl << "Constructing the CUFFT Context with the following parameters: " << std::endl
+                  << "Signal Size: " << signal_size_ << std::endl
+                  << "Page Size: " << page_size_ << std::endl
+                  << "Total Pages: " << total_pages_ << std::endl << std::endl;
+
         cufftResult cufftResult;
         cufftResult = cufftPlan1d(&cufft_execution_plan_, page_size_, CUFFT_C2C, BATCH_COUNT_);
         CudaUtils::checkCufftErrors(cufftResult, "CUFFT Create Plan");
@@ -64,8 +69,6 @@ public:
             vector<complex<double> >::const_iterator page_start = signal_.begin() + start_index;
             vector<complex<double> >::const_iterator page_end = signal_.begin() + end_index;
             vector<complex<double> > signal_page(page_start, page_end);
-
-            host_signal_page_ = CudaUtils::VectorToCufftComplex(signal_page);
 
             device_signal_pages_ = (cufftComplex **) malloc(sizeof(cufftComplex) * page_size_);
 

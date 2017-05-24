@@ -75,7 +75,6 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
         vector<complex<double> >::const_iterator page_end = input_signal.begin() + end_index;
         vector<complex<double> > signal_page(page_start, page_end);
 
-        FastFourierTransform fftwTransformer(page_size);
         vector<complex<double> > output = fftwTransformer.DirectTransform(signal_page);
     }
 

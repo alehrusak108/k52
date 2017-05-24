@@ -31,7 +31,6 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
 
     ofstream test_output;
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
-    test_output << endl << "FFT PERFORMANCE TEST" << endl << endl;
     test_output << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
     size_t page_size = 131072;
@@ -89,8 +88,9 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
 int main(int argc, char* argv[]) {
     ofstream test_output;
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
-    int signal_size = 524288;
-    for (int test_index = 1; test_index <= 7; test_index++) {
+    test_output << endl << "FFT PERFORMANCE TEST (FFTW vs CUDA)" << endl << endl;
+    int signal_size = 134217728;
+    //for (int test_index = 1; test_index <= 8; test_index++) {
         vector<complex<double> > input_signal = Helpers::GenerateComplexSignal(signal_size);
         test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
@@ -98,6 +98,6 @@ int main(int argc, char* argv[]) {
         FFTWPerformanceTest(input_signal);
         test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;
-    }
+    //}
     test_output.close();
 }

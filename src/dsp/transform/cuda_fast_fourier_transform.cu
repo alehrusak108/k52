@@ -34,7 +34,7 @@ namespace dsp
 #ifdef BUILD_WITH_CUDA
 
 // Initializes given pointer to signal page with signal data using "begin" and "end" indexes
-__global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int page_size, int begin)
+__global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int page_size, int from_index)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     /*if (thread_id < end - begin)
@@ -43,13 +43,13 @@ __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, i
         page[thread_id].y = signal[begin + thread_id].y;
     }*/
     for (int i = 0; i < page_size; i++) {
-        page[i].x = signal[begin + i].x;
-        page[i].y = signal[begin + i].y;
+        page[i].x = signal[from_index + i].x;
+        page[i].y = signal[from_index + i].y;
     }
 }
 
 // Copies given pointer to signal page into signal using "begin" and "end" indexes
-__global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int page_size, int begin)
+__global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int page_size, int from_index)
 {
     /*const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread_id < end - begin)
@@ -58,8 +58,8 @@ __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int p
         signal[begin + thread_id].y = page[thread_id].y;
     }*/
     for (int i = 0; i < page_size; i++) {
-        signal[begin + i].x = page[i].x;
-        signal[begin + i].y = page[i].y;
+        signal[from_index + i].x = page[i].x;
+        signal[from_index + i].y = page[i].y;
     }
 }
 
@@ -144,9 +144,8 @@ public:
         // MAKE device_signal 1D and copy arrays in __global__ function
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
-            size_t start_index = page_size_ * page_number;
-            size_t end_index = start_index + page_size_;
-            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, start_index);
+            size_t from_index = page_size_ * page_number;
+            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
             cufftComplex *host_page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
 
@@ -165,7 +164,7 @@ public:
             );
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
-            CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, start_index, end_index);
+            CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
 
             free(host_page);
         }

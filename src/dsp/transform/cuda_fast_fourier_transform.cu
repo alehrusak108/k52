@@ -140,12 +140,12 @@ public:
             size_t end_index = start_index + page_size_;
             InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, start_index, end_index);
 
-            cufftComplex *host_page = (cufftComplex *) malloc ((end_index - start_index) * sizeof(cufftComplex));
+            cufftComplex *host_page = (cufftComplex *) malloc (page_size_ * sizeof(cufftComplex));
 
             cudaError cuda_result = cudaMemcpy(host_page, device_signal_page_, page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
             std::cout << "PAGE #" << page_number << std::endl;
-            for (int i = 0; i < end_index - start_index; i++) {
+            for (int i = 0; i < page_size_; i++) {
                 std::cout << host_page[i].x << "\t" << host_page[i].y << std::endl;
             }
 
@@ -158,6 +158,8 @@ public:
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
             CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, start_index, end_index);
+
+            free(host_page);
         }
     }
 

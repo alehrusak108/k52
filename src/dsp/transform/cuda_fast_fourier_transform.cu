@@ -37,7 +37,7 @@ namespace dsp
 __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int begin, int end)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id < end - begin)
+    if (thread_id > 0 && end - begin)
     {
         page[thread_id].x = signal[begin + thread_id].x;
         page[thread_id].y = signal[begin + thread_id].y;
@@ -48,7 +48,7 @@ __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, i
 __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int begin, int end)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id < end - begin)
+    if (thread_id > 0 && thread_id < end - begin)
     {
         signal[begin + thread_id].x = page[thread_id].x;
         signal[begin + thread_id].y = page[thread_id].y;
@@ -140,6 +140,14 @@ public:
             size_t end_index = start_index + page_size_;
             InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, start_index, end_index);
 
+            cufftComplex *host_page = (cufftComplex *) malloc ((end_index - start_index) * sizeof(cufftComplex));
+
+            cudaError cuda_result = cudaMemcpy(host_page, device_signal_, signal_size_, cudaMemcpyDeviceToHost);
+            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
+            for (int i = 0; i < end_index - start_index; i++) {
+                std::cout << host_page[i].x << "\t" << host_page[i].y << std::endl;
+            }
+
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
                     device_signal_page_,
@@ -156,9 +164,9 @@ public:
     {
         cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_, cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-        for (int i = 0; i < signal_size_; i++) {
+        /*for (int i = 0; i < signal_size_; i++) {
             std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
-        }
+        }*/
         return CudaUtils::CufftComplexToVector(host_signal_, signal_size_);
     }
 

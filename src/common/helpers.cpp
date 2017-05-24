@@ -67,7 +67,7 @@ vector<complex<double> > Helpers::GenerateComplexSignal(size_t signal_size)
     {
         input_signal[index].real(var);
         input_signal[index].imag(0);
-        if ((index + 1) % 8 == 0) {
+        if ((index + 1) % 128 == 0) {
             var = 0;
         } else {
             var++;

@@ -146,7 +146,7 @@ public:
                     device_signal_page_,
                     transform_direction
             );
-            //CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
+            CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
             CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, start_index, end_index);
         }

@@ -42,10 +42,6 @@ __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, i
         page[thread_id].x = signal[from_index + thread_id].x;
         page[thread_id].y = signal[from_index + thread_id].y;
     }
-    /*for (int i = 0; i < page_size; i++) {
-        page[i].x = signal[from_index + i].x;
-        page[i].y = signal[from_index + i].y;
-    }*/
 }
 
 // Copies given pointer to signal page into signal using "begin" and "end" indexes
@@ -57,10 +53,6 @@ __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int p
         signal[from_index + thread_id].x = page[thread_id].x;
         signal[from_index + thread_id].y = page[thread_id].y;
     }
-    /*for (int i = 0; i < page_size; i++) {
-        signal[from_index + i].x = page[i].x;
-        signal[from_index + i].y = page[i].y;
-    }*/
 }
 
 // Using pImpl approach to hide CUFFT from outside use

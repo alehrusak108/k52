@@ -21,6 +21,8 @@
 
 #endif
 
+using ::std::ios;
+using ::std::ofstream;
 using ::std::vector;
 using ::std::complex;
 using ::std::invalid_argument;
@@ -66,6 +68,9 @@ public:
             : page_size_(page_size)
     {
 
+        ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
+
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
         if (signal.size() <= 0)
@@ -78,7 +83,7 @@ public:
 
         cudaSetDevice(0);
 
-        std::cout << std::endl << "Constructing the CUFFT Context with the following parameters: " << std::endl
+        test_output << std::endl << "Constructing the CUFFT Context with the following parameters: " << std::endl
                   << "Signal Size: " << signal_size_ << std::endl
                   << "Page Size: " << page_size_ << std::endl
                   << "Total Pages: " << total_pages_ << std::endl << std::endl;
@@ -102,7 +107,10 @@ public:
 
     ~CudaFastFourierTransformImpl() {
 
-        std::cout << "Destroying CUFFT Context..." << std::endl << std::endl;
+        ofstream test_output;
+        test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
+
+        test_output << "Destroying CUFFT Context..." << std::endl << std::endl;
 
         cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
         CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
@@ -118,7 +126,7 @@ public:
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
-        std::cout << "CUFFT Context Destroyed" << std::endl << std::endl;
+        test_output << "CUFFT Context Destroyed" << std::endl << std::endl;
     }
 
     void DirectTransform()

@@ -143,10 +143,6 @@ public:
 
             cudaError cuda_result = cudaMemcpy(host_page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-            /*std::cout << "PAGE #" << page_number << std::endl;
-            for (int i = 0; i < page_size_; i++) {
-                std::cout << host_page[i].x << "\t" << host_page[i].y << std::endl;
-            }*/
 
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
@@ -166,9 +162,6 @@ public:
     {
         cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_ * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-        for (int i = 0; i < signal_size_; i++) {
-            std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
-        }
         return CudaUtils::CufftComplexToVector(host_signal_, signal_size_);
     }
 

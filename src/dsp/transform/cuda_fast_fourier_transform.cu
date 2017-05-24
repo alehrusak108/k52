@@ -142,7 +142,7 @@ public:
         {
             size_t start_index = page_size_ * page_number;
             size_t end_index = start_index + page_size_;
-            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, start_index, end_index);
+            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, start_index);
 
             cufftComplex *host_page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
 

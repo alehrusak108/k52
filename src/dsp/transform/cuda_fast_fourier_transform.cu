@@ -37,30 +37,30 @@ namespace dsp
 __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int page_size, int from_index)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    /*if (thread_id < end - begin)
+    if (thread_id < page_size)
     {
-        page[thread_id].x = signal[begin + thread_id].x;
-        page[thread_id].y = signal[begin + thread_id].y;
-    }*/
-    for (int i = 0; i < page_size; i++) {
+        page[thread_id].x = signal[from_index + thread_id].x;
+        page[thread_id].y = signal[from_index + thread_id].y;
+    }
+    /*for (int i = 0; i < page_size; i++) {
         page[i].x = signal[from_index + i].x;
         page[i].y = signal[from_index + i].y;
-    }
+    }*/
 }
 
 // Copies given pointer to signal page into signal using "begin" and "end" indexes
 __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int page_size, int from_index)
 {
-    /*const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id < end - begin)
+    const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    if (thread_id < page_size)
     {
-        signal[begin + thread_id].x = page[thread_id].x;
-        signal[begin + thread_id].y = page[thread_id].y;
-    }*/
-    for (int i = 0; i < page_size; i++) {
+        signal[from_index + thread_id].x = page[thread_id].x;
+        signal[from_index + thread_id].y = page[thread_id].y;
+    }
+    /*for (int i = 0; i < page_size; i++) {
         signal[from_index + i].x = page[i].x;
         signal[from_index + i].y = page[i].y;
-    }
+    }*/
 }
 
 // Using pImpl approach to hide CUFFT from outside use

@@ -142,8 +142,9 @@ public:
 
             cufftComplex *host_page = (cufftComplex *) malloc ((end_index - start_index) * sizeof(cufftComplex));
 
-            cudaError cuda_result = cudaMemcpy(host_page, device_signal_, signal_size_, cudaMemcpyDeviceToHost);
+            cudaError cuda_result = cudaMemcpy(host_page, device_signal_page_, page_size_, cudaMemcpyDeviceToHost);
             CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
+            std::cout << "PAGE #" << page_number << std::endl;
             for (int i = 0; i < end_index - start_index; i++) {
                 std::cout << host_page[i].x << "\t" << host_page[i].y << std::endl;
             }

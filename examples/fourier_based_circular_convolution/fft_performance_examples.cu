@@ -34,7 +34,7 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
     cout << endl << "FFT PERFORMANCE TEST" << endl << endl;
     cout << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
-    size_t page_size = 512;//262144;
+    size_t page_size = 128;//262144;
 
     clock_t planning_time = clock();
     CudaFastFourierTransform cufftTransformer(input_signal, page_size);

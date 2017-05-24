@@ -147,22 +147,15 @@ public:
             size_t from_index = page_size_ * page_number;
             InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
-            cufftComplex *host_page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
-
-            cudaError cuda_result = cudaMemcpy(host_page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
-            CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
-
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
                     device_signal_page_,
                     device_signal_page_,
                     transform_direction
             );
-            CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
+            //CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
             CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
-
-            free(host_page);
         }
     }
 

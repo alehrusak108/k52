@@ -37,7 +37,7 @@ namespace dsp
 __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, int begin, int end)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id >= 0 && thread_id < end - begin)
+    if (thread_id < end - begin)
     {
         page[thread_id].x = signal[begin + thread_id].x;
         page[thread_id].y = signal[begin + thread_id].y;
@@ -48,7 +48,7 @@ __global__ void InitializeSignalPage(cufftComplex *page, cufftComplex *signal, i
 __global__ void CopyPageToSignal(cufftComplex *signal, cufftComplex *page, int begin, int end)
 {
     const int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (thread_id >= 0 && thread_id < end - begin)
+    if (thread_id < end - begin)
     {
         signal[begin + thread_id].x = page[thread_id].x;
         signal[begin + thread_id].y = page[thread_id].y;

@@ -19,7 +19,7 @@ public:
     std::vector< std::complex< double > > EvaluateConvolution(
             const std::vector< std::complex< double > >& first_sequence,
             const std::vector< std::complex< double > >& second_sequence
-    ) const;
+    );
 
 private:
     IFourierTransform::shared_ptr fourier_transform_;

@@ -64,8 +64,8 @@ class CudaFastFourierTransform::CudaFastFourierTransformImpl
 {
 
 public:
-    CudaFastFourierTransformImpl(vector<complex<double> > signal, size_t page_size)
-            : page_size_(page_size)
+    CudaFastFourierTransformImpl(size_t signal_size, size_t page_size)
+            : signal_size_(signal_size), page_size_(page_size)
     {
 
         ofstream test_output;
@@ -73,12 +73,11 @@ public:
 
         boost::mutex::scoped_lock scoped_lock(cuda_mutex_);
 
-        if (signal.size() <= 0)
+        if (signal_size <= 0)
         {
             throw std::invalid_argument("CUDA FFT FATAL: Modulo of sequence_size with page_size should be 0.");
         }
 
-        signal_size_ = signal.size();
         total_pages_ = signal_size_ / page_size_;
 
         cudaSetDevice(0);
@@ -99,10 +98,7 @@ public:
         cuda_result = cudaMalloc((void **) &device_signal_page_, sizeof(cufftComplex) * page_size_);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation memory for a signal page");
 
-        // Copy the whole signal to Device
-        host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
-        cuda_result = cudaMemcpy(device_signal_, host_signal_, sizeof(cufftComplex) * signal_size_, cudaMemcpyHostToDevice);
-        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD memory copying from Host to Device");
+        host_signal_ = (cufftComplex *) malloc(sizeof(cufftComplex) * signal_size_);
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -159,11 +155,33 @@ public:
         }
     }
 
+    void SetDeviceSignal(vector<complex<double> > signal)
+    {
+        // Copy the whole signal to Device
+        CudaUtils::VectorToCufftComplex(signal, host_signal_);
+        cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, sizeof(cufftComplex) * signal_size_, cudaMemcpyHostToDevice);
+        CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting other signal. Copy from Host to Device");
+    }
+
+    void SetDeviceSignal(cufftComplex *signal)
+    {
+        // Copy the whole signal to Device
+        cudaError cuda_result = cudaMemcpy(device_signal_, signal, sizeof(cufftComplex) * signal_size_, cudaMemcpyHostToDevice);
+        CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting other signal. Copy from Host to Device");
+    }
+
     vector<complex<double> > GetTransformResult()
     {
         cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_ * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
-        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD C2C Copying execution results from Device to Host");
+        CudaUtils::checkErrors(cuda_result, "CUFFT GetTransformResult Copying execution results from Device to Host");
         return CudaUtils::CufftComplexToVector(host_signal_, signal_size_);
+    }
+
+    cufftComplex* GetTransformResultArray()
+    {
+        cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_ * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
+        CudaUtils::checkErrors(cuda_result, "CUFFT GetTransformResultArray Copying execution results from Device to Host");
+        return host_signal_;
     }
 
 private:
@@ -185,10 +203,10 @@ private:
 
 boost::mutex CudaFastFourierTransform::CudaFastFourierTransformImpl::cuda_mutex_;
 
-CudaFastFourierTransform::CudaFastFourierTransform(vector<complex<double> > signal, size_t page_size)
+CudaFastFourierTransform::CudaFastFourierTransform(size_t signal_size, size_t page_size)
 {
     cuda_fast_fourier_transform_impl_ =
-            boost::make_shared<CudaFastFourierTransformImpl>(signal, page_size);
+            boost::make_shared<CudaFastFourierTransformImpl>(signal_size, page_size);
 }
 
 CudaFastFourierTransform::~CudaFastFourierTransform()
@@ -205,9 +223,24 @@ void CudaFastFourierTransform::InverseTransform()
     cuda_fast_fourier_transform_impl_->InverseTransform();
 }
 
+void CudaFastFourierTransform::SetDeviceSignal(cufftComplex *signal)
+{
+    cuda_fast_fourier_transform_impl_->SetDeviceSignal(signal);
+}
+
+void CudaFastFourierTransform::SetDeviceSignal(vector<complex<double> > signal)
+{
+    cuda_fast_fourier_transform_impl_->SetDeviceSignal(signal);
+}
+
 vector<complex<double> > CudaFastFourierTransform::GetTransformResult()
 {
     return cuda_fast_fourier_transform_impl_->GetTransformResult();
+}
+
+cufftComplex *CudaFastFourierTransform::GetTransformResultArray()
+{
+    return cuda_fast_fourier_transform_impl_->GetTransformResultArray();
 }
 
 #endif //BUILD_WITH_CUDA

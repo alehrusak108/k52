@@ -21,6 +21,8 @@
 
 #define CUFFT_EXECUTIONS_PLANNED 1
 
+#define PAGE_SIZE 262144
+
 using namespace std;
 
 using namespace k52::dsp;
@@ -33,10 +35,9 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
     test_output << endl << "[ CUFFT Performance TEST ] STARTED." << endl;
 
-    size_t page_size = 131072;
-
     clock_t planning_time = clock();
-    CudaFastFourierTransform cufftTransformer(input_signal, page_size);
+    CudaFastFourierTransform cufftTransformer(input_signal.size(), PAGE_SIZE);
+    cufftTransformer.SetDeviceSignal(input_signal);
     test_output << "CUFFT Data Transfer and Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
@@ -59,18 +60,17 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
     test_output << "[ FFTW3 Performance TEST ] STARTED." << endl;
 
-    size_t page_size = 131072;
-    int total_pages = input_signal.size() / page_size;
+    int total_pages = input_signal.size() / PAGE_SIZE;
 
     clock_t planning_time = clock();
-    FastFourierTransform fftwTransformer(page_size);
+    FastFourierTransform fftwTransformer(PAGE_SIZE);
     test_output << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
     for (unsigned int page_number = 0; page_number < total_pages; page_number++)
     {
-        size_t start_index = page_size * page_number;
-        size_t end_index = start_index + page_size;
+        size_t start_index = PAGE_SIZE * page_number;
+        size_t end_index = start_index + PAGE_SIZE;
         vector<complex<double> >::const_iterator page_start = input_signal.begin() + start_index;
         vector<complex<double> >::const_iterator page_end = input_signal.begin() + end_index;
         vector<complex<double> > signal_page(page_start, page_end);
@@ -84,7 +84,10 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
     test_output.close();
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
+    srand(time(NULL));
+
     ofstream test_output;
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
     test_output << endl << "FFT PERFORMANCE TEST (FFTW vs CUDA)" << endl << endl;

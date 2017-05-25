@@ -29,7 +29,7 @@ public:
     // IMPORTANT: Be ware of "executions_planned" number as far as
     // CUFFT performs memory allocations for Planning
     // and it strictly depends on number of planned CUFFT executions
-    CudaFastFourierTransform(vector<complex<double> > sequence, size_t page_size);
+    CudaFastFourierTransform(size_t signal_size, size_t page_size);
 
     ~CudaFastFourierTransform();
 
@@ -37,7 +37,13 @@ public:
 
     void InverseTransform();
 
+    void SetDeviceSignal(cufftComplex *signal);
+
+    void SetDeviceSignal(vector<complex<double> > signal);
+
     vector<complex<double> > GetTransformResult();
+
+    cufftComplex* GetTransformResultArray();
 
 private:
 

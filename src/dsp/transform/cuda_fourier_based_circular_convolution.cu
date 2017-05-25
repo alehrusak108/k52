@@ -42,42 +42,41 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
     }
 }
 
-CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t sequence_size, int batch_size)
+CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t signal_size, size_t page_size)
 {
-    //cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(sequence_size, batch_size);
+    cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(signal_size, page_size_);
+    this->page_size_ = page_size;
 }
 
 vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolution(
         const vector<complex<double> > &first_signal,
-        const vector<complex<double> > &second_signal) const
+        const vector<complex<double> > &second_signal)
 {
     if (first_signal.size() != second_signal.size())
     {
         throw std::runtime_error("Can evaluate convolution only for sequences of the same size.");
     }
 
-    /*size_t signal_size = first_signal.size();
+    size_t signal_size = first_signal.size();
 
-    // Here are used additional CudaFastFourierTransform methods
-    // to prevent from useless copying cufftComplex arrays into vector
-    cudaLibXtDesc *first_transform =
-            cufft_transformer_->DirectTransformLibXtDesc(first_signal);
-    cudaLibXtDesc *second_transform =
-            cufft_transformer_->DirectTransformLibXtDesc(second_signal);
+    cufft_transformer_->SetDeviceSignal(first_signal);
+    cufft_transformer_->DirectTransform();
+    vector<complex<double> > first_transform = cufft_transformer_->GetTransformResult();
 
-    // Perform Multiplication on several GPUs
-    int available_gpus = cufft_transformer_->GetAvailableGPUs();
+    cufft_transformer_->SetDeviceSignal(second_signal);
+    cufft_transformer_->DirectTransform();
+    vector<complex<double> > second_transform = cufft_transformer_->GetTransformResult();
+
+    cufftComplex *first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
+    cufftComplex *second = CudaUtils::VectorToCufftComplexAlloc(second_transform);
+
     float scale = 1.0f / signal_size;
-    MultiplySignalsOnMultipleGPUs(first_transform, second_transform, scale, available_gpus);
+    MultiplySignals<<<256, 512>>>(first, second, signal_size, scale);
 
-    // NOTE: Multiplication results were written instead of first_transform
-    vector<complex<double> > convolution =
-            cufft_transformer_->InverseTransformLibXtDesc(first_transform, signal_size);
+    cufft_transformer_->SetDeviceSignal(first);
+    cufft_transformer_->InverseTransform();
 
-    cufftXtFree(second_transform);*/
-
-    vector<complex<double> > convolution;
-    return convolution;
+    return cufft_transformer_->GetTransformResult();
 }
 
 #endif //BUILD_WITH_CUDA

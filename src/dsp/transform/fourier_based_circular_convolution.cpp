@@ -10,7 +10,7 @@ k52::dsp::FourierBasedCircularConvolution::FourierBasedCircularConvolution(
 
 std::vector< std::complex< double > > k52::dsp::FourierBasedCircularConvolution::EvaluateConvolution(
         const std::vector< std::complex< double > > &first_sequence,
-        const std::vector< std::complex< double > > &second_sequence) const
+        const std::vector< std::complex< double > > &second_sequence)
 {
     if (first_sequence.size() != second_sequence.size())
     {

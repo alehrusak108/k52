@@ -25,12 +25,12 @@ class CudaFourierBasedCircularConvolution : public ICircularConvolution
 
 public:
 
-    CudaFourierBasedCircularConvolution(size_t sequence_size, int executions_planned);
+    CudaFourierBasedCircularConvolution(size_t signal_size, size_t page_size);
 
     vector<complex<double> > EvaluateConvolution(
             const vector<complex<double> > &first_signal,
             const vector<complex<double> > &second_signal
-    ) const;
+    );
 
 private:
 
@@ -38,6 +38,8 @@ private:
     // because CudaFastFourierTransform provides
     // two more methods to perform FFT, that are very useful for convolution
     boost::shared_ptr<CudaFastFourierTransform> cufft_transformer_;
+
+    size_t page_size_;
 };
 
 } // namespace dsp

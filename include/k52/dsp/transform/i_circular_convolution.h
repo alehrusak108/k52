@@ -24,7 +24,7 @@ public:
     virtual std::vector< std::complex< double > > EvaluateConvolution(
             const std::vector< std::complex< double > >& first_sequence,
             const std::vector< std::complex< double > >& second_sequence
-    ) const = 0;
+    ) = 0;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(ICircularConvolution);

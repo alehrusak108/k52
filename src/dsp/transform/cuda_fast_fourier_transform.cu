@@ -136,11 +136,13 @@ public:
 
     void Transform(int transform_direction)
     {
+        cudaSetDevice(0);
+
         // MAKE device_signal 1D and copy arrays in __global__ function
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             size_t from_index = page_size_ * page_number;
-            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
+            InitializeSignalPage<<<32, 64>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
             cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
             cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
@@ -165,7 +167,7 @@ public:
                 std::cout << page[i].x << "\t" << page[i].y << std::endl;
             }
 
-            CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
+            CopyPageToSignal<<<32, 64>>>(device_signal_, device_signal_page_, page_size_, from_index);
         }
     }
 

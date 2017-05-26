@@ -172,11 +172,11 @@ public:
 
     vector<complex<double> > GetTransformResult()
     {
+        cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_ * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
         for (int i = 0; i < signal_size_; i++)
         {
             std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
         }
-        cudaError cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_size_ * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
         CudaUtils::checkErrors(cuda_result, "CUFFT GetTransformResult Copying execution results from Device to Host");
         return CudaUtils::CufftComplexToVector(host_signal_, signal_size_);
     }

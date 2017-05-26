@@ -152,6 +152,7 @@ public:
 
             cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
             cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
+            std::cout << "TRANSFORM PAGE" << std::endl;
             for (int i = 0 ; i < page_size_; i++)
             {
                 std::cout << page[i].x << "\t" << page[i].y << std::endl;
@@ -166,6 +167,14 @@ public:
         // Copy the whole signal to Device
         host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
+
+        cufftComplex *page = (cufftComplex *) malloc (signal_memory_size_);
+        cuda_result = cudaMemcpy(page, device_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
+        std::cout << "SET VECTOR" << std::endl;
+        for (int i = 0 ; i < signal_size_; i++)
+        {
+            std::cout << page[i].x << "\t" << page[i].y << std::endl;
+        }
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting signal from vector. Copy from Host to Device");
     }
 

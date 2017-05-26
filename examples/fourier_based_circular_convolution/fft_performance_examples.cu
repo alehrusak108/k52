@@ -46,7 +46,8 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
     cufftTransformer.DirectTransform();
     vector<complex<double> > output = cufftTransformer.GetTransformResult();
 
-    //Helpers::PrintComplexVector(output);
+    cout << "RESULT: " << endl;
+    Helpers::PrintComplexVector(output);
 
     clock_t finish = clock() - execution_time;
     test_output << endl << "Time elapsed for CUFFT Transform Test: " << (double) (clock() - execution_time) / CLOCKS_PER_SEC << " seconds " << endl << endl;

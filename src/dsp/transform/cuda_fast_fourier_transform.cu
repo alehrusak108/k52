@@ -160,11 +160,7 @@ public:
     {
         // Copy the whole signal to Device
         host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
-
-        cudaError cuda_result = cudaMalloc((void **) &device_signal_, signal_memory_size_);
-        CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation on single GPU");
-
-        cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
+        cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
     }
 

@@ -142,7 +142,7 @@ public:
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             size_t from_index = page_size_ * page_number;
-            InitializeSignalPage<<<32, 64>>>(device_signal_page_, device_signal_, page_size_, from_index);
+            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
             cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
             cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
@@ -167,7 +167,7 @@ public:
                 std::cout << page[i].x << "\t" << page[i].y << std::endl;
             }
 
-            CopyPageToSignal<<<32, 64>>>(device_signal_, device_signal_page_, page_size_, from_index);
+            CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
         }
     }
 
@@ -177,10 +177,10 @@ public:
         host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
         cuda_result = cudaMemcpy(host_signal_, device_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-        /*for (int i = 0 ; i < signal_size_; i++)
+        for (int i = 0 ; i < signal_size_; i++)
         {
             std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
-        }*/
+        }
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting signal from vector. Copy from Host to Device");
     }
 

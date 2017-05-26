@@ -94,14 +94,14 @@ int main(int argc, char* argv[])
     test_output.open("fast_fourier_transform_test.txt", ios::out | ios::app);
     test_output << endl << "FFT PERFORMANCE TEST (FFTW vs CUDA)" << endl << endl;
     int signal_size = 1024;
-    //for (int test_index = 1; test_index <= 7; test_index++) {
+    for (int test_index = 1; test_index <= 7; test_index++) {
         vector<complex<double> > input_signal = Helpers::GenerateComplexSignal(signal_size);
-        //test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;
+        test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;
         CUFFTPerformanceTest(input_signal);
         test_output << "-----------------------------------------------------------------------" << endl << endl;
-        //FFTWPerformanceTest(input_signal);
+        FFTWPerformanceTest(input_signal);
         test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;
-    //}
+    }
     test_output.close();
 }

@@ -67,7 +67,7 @@ void FFTWPerformanceTest(vector<complex<double> > input_signal)
     test_output << endl << "FFTW3 Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();
-    for (unsigned int page_number = 0; page_number < total_pages; page_number++)
+    for (size_t page_number = 0; page_number < total_pages; page_number++)
     {
         size_t start_index = PAGE_SIZE * page_number;
         size_t end_index = start_index + PAGE_SIZE;

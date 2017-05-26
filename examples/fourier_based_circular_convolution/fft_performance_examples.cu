@@ -37,7 +37,7 @@ void CUFFTPerformanceTest(vector<complex<double> > input_signal)
 
     clock_t planning_time = clock();
     CudaFastFourierTransform cufftTransformer(input_signal.size(), PAGE_SIZE);
-    cufftTransformer.SetDeviceSignal(input_signal);
+    cufftTransformer.SetDeviceSignal(CudaUtils::VectorToCufftComplexAlloc(input_signal));
     test_output << "CUFFT Data Transfer and Execution Plan prepared in: " << (float) (clock() - planning_time) / CLOCKS_PER_SEC << " seconds" << endl;
 
     clock_t execution_time = clock();

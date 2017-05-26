@@ -159,6 +159,10 @@ public:
     {
         // Copy the whole signal to Device
         CudaUtils::VectorToCufftComplex(signal, host_signal_);
+        for (int i = 0; i < signal_size_; i++)
+        {
+            std::cout << host_signal_[i].x << "\t" << host_signal_[i].y << std::endl;
+        }
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, sizeof(cufftComplex) * signal_size_, cudaMemcpyHostToDevice);
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting other signal. Copy from Host to Device");
     }

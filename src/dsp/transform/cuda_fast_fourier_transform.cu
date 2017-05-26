@@ -97,8 +97,6 @@ public:
 
         cuda_result = cudaMalloc((void **) &device_signal_page_, sizeof(cufftComplex) * page_size_);
         CudaUtils::checkErrors(cuda_result, "CUFFT FORWARD allocation memory for a signal page");
-
-        host_signal_ = (cufftComplex *) malloc(signal_memory_size_);
     }
 
     ~CudaFastFourierTransformImpl() {
@@ -158,7 +156,7 @@ public:
     void SetDeviceSignal(vector<complex<double> > signal)
     {
         // Copy the whole signal to Device
-        CudaUtils::VectorToCufftComplex(signal, host_signal_);
+        host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting other signal. Copy from Host to Device");
     }

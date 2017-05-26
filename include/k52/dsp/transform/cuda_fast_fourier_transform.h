@@ -37,9 +37,7 @@ public:
 
     void InverseTransform();
 
-    void SetDeviceSignal(cufftComplex *signal);
-
-    void SetDeviceSignal(vector<complex<double> > signal);
+    void SetDeviceSignalFromVector(vector<complex<double> > signal);
 
     vector<complex<double> > GetTransformResult();
 

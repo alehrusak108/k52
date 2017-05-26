@@ -156,19 +156,12 @@ public:
         }
     }
 
-    void SetDeviceSignal(vector<complex<double> > signal)
+    void SetDeviceSignalFromVector(vector<complex<double> > signal)
     {
         // Copy the whole signal to Device
         host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
-        CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting signal from vector. Copy from Host to Device");
-    }
-
-    void SetDeviceSignal(cufftComplex *signal)
-    {
-        // Copy the whole signal to Device
-        cudaError cuda_result = cudaMemcpy(device_signal_, signal, signal_memory_size_, cudaMemcpyHostToDevice);
-        CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting signal. Copy from Host to Device");
+        CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
     }
 
     vector<complex<double> > GetTransformResult()
@@ -225,14 +218,9 @@ void CudaFastFourierTransform::InverseTransform()
     cuda_fast_fourier_transform_impl_->InverseTransform();
 }
 
-void CudaFastFourierTransform::SetDeviceSignal(cufftComplex *signal)
+void CudaFastFourierTransform::SetDeviceSignalFromVector(vector<complex<double> > signal)
 {
-    cuda_fast_fourier_transform_impl_->SetDeviceSignal(signal);
-}
-
-void CudaFastFourierTransform::SetDeviceSignal(vector<complex<double> > signal)
-{
-    cuda_fast_fourier_transform_impl_->SetDeviceSignal(signal);
+    cuda_fast_fourier_transform_impl_->SetDeviceSignalFromVector(signal);
 }
 
 vector<complex<double> > CudaFastFourierTransform::GetTransformResult()

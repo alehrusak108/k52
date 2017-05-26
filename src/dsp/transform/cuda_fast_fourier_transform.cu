@@ -152,7 +152,7 @@ public:
 
             cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
             cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
-            for (int i = 0 ; i < signal_size_; i++)
+            for (int i = 0 ; i < page_size_; i++)
             {
                 std::cout << page[i].x << "\t" << page[i].y << std::endl;
             }

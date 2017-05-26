@@ -1,4 +1,5 @@
 #include <k52/dsp/transform/cuda_fourier_based_circular_convolution.h>
+#include <k52/common/helpers.h>
 #include <cstdio>
 #include <stdexcept>
 
@@ -20,6 +21,7 @@
 using ::std::vector;
 using ::std::complex;
 using ::k52::dsp::CudaFourierBasedCircularConvolution;
+using ::k52::common::Helpers;
 
 #ifdef BUILD_WITH_CUDA
 
@@ -76,6 +78,8 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     MultiplySignals<<<256, 512>>>(first, second, signal_size, scale);
 
     vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(first, signal_size);
+
+    Helpers::PrintComplexVector(multiplication);
 
     std::cout << "THIRD" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(multiplication);

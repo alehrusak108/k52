@@ -16,6 +16,7 @@
 #ifdef BUILD_WITH_CUDA
 
 #include <k52/dsp/transform/cuda_fast_fourier_transform.h>
+#include <k52/dsp/transform/util/cuda_utils.h>
 
 #endif
 

@@ -141,7 +141,7 @@ public:
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {
             size_t from_index = page_size_ * page_number;
-            InitializeSignalPage<<<64, 128>>>(device_signal_page_, device_signal_, page_size_, from_index);
+            InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
@@ -151,7 +151,7 @@ public:
             );
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
-            CopyPageToSignal<<<64, 128>>>(device_signal_, device_signal_page_, page_size_, from_index);
+            CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
         }
     }
 

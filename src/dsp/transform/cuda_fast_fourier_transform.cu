@@ -142,6 +142,14 @@ public:
             size_t from_index = page_size_ * page_number;
             InitializeSignalPage<<<128, 256>>>(device_signal_page_, device_signal_, page_size_, from_index);
 
+            cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
+            cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
+            std::cout << "COPY PAGE" << std::endl;
+            for (int i = 0 ; i < page_size_; i++)
+            {
+                std::cout << page[i].x << "\t" << page[i].y << std::endl;
+            }
+
             cufftResult cufft_result = cufftExecC2C(
                     cufft_execution_plan_,
                     device_signal_page_,
@@ -150,8 +158,8 @@ public:
             );
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
-            cufftComplex *page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
-            cudaError cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
+            page = (cufftComplex *) malloc (sizeof(cufftComplex) * page_size_);
+            cuda_result = cudaMemcpy(page, device_signal_page_, sizeof(cufftComplex) * page_size_, cudaMemcpyDeviceToHost);
             std::cout << "TRANSFORM PAGE" << std::endl;
             for (int i = 0 ; i < page_size_; i++)
             {
@@ -167,14 +175,6 @@ public:
         // Copy the whole signal to Device
         host_signal_ = CudaUtils::VectorToCufftComplexAlloc(signal);
         cudaError cuda_result = cudaMemcpy(device_signal_, host_signal_, signal_memory_size_, cudaMemcpyHostToDevice);
-
-        cufftComplex *page = (cufftComplex *) malloc (signal_memory_size_);
-        cuda_result = cudaMemcpy(page, device_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-        std::cout << "SET VECTOR" << std::endl;
-        for (int i = 0 ; i < signal_size_; i++)
-        {
-            std::cout << page[i].x << "\t" << page[i].y << std::endl;
-        }
         CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignal setting signal from vector. Copy from Host to Device");
     }
 

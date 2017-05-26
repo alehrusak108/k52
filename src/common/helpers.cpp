@@ -62,10 +62,16 @@ void Helpers::PrintComplexVector(vector<complex<double> > &vec)
 vector<complex<double> > Helpers::GenerateComplexSignal(size_t signal_size)
 {
     vector<complex<double> > input_signal(signal_size);
+    int var = 0;
     for (size_t index = 0; index < signal_size; index++)
     {
-        input_signal[index].real(-5 + rand() % 15);
-        input_signal[index].imag(-5 + rand() % 15);
+        input_signal[index].real(var);
+        input_signal[index].imag(0);
+        if ((index + 1) % 8 == 0) {
+            var = 0;
+        } else {
+            var++;
+        }
     }
     return input_signal;
 }

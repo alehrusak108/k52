@@ -39,7 +39,11 @@ private:
     // two more methods to perform FFT, that are very useful for convolution
     boost::shared_ptr<CudaFastFourierTransform> cufft_transformer_;
 
+    size_t signal_memory_size_;
     size_t page_size_;
+
+    cufftComplex *d_first_signal_;
+    cufftComplex *d_second_signal_;
 };
 
 } // namespace dsp

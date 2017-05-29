@@ -49,6 +49,15 @@ CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t 
 {
     cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(signal_size, page_size_);
     this->page_size_ = page_size;
+
+    size_t signal_memory_size = signal_size * sizeof(cufftComplex);
+    cudaError cuda_result;
+
+    cuda_result = cudaMalloc((void **) &d_first_signal_, signal_memory_size);
+    CudaUtils::checkErrors(cuda_result, "Convolution: allocation 1 on single GPU");
+
+    cuda_result = cudaMalloc((void **) &d_second_signal_, signal_memory_size);
+    CudaUtils::checkErrors(cuda_result, "Convolution: allocation 2 on single GPU");
 }
 
 vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolution(
@@ -70,20 +79,28 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cufft_transformer_->DirectTransform();
     vector<complex<double> > second_transform = cufft_transformer_->GetTransformResult();
 
-    cufftComplex *first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
-    cufftComplex *second = CudaUtils::VectorToCufftComplexAlloc(second_transform);
+    cufftComplex *h_first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
+    cufftComplex *h_second = CudaUtils::VectorToCufftComplexAlloc(second_transform);
+
+    cudaError cuda_result;
+    cuda_result = cudaMemcpy(d_first_signal_, h_first, signal_memory_size_, cudaMemcpyHostToDevice);
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
+
+    cuda_result = cudaMemcpy(d_second_signal_, h_second, signal_memory_size_, cudaMemcpyHostToDevice);
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
 
     float scale = 1.0f / signal_size;
-    MultiplySignals<<<256, 512>>>(first, second, signal_size, scale);
+    MultiplySignals<<<256, 512>>>(d_first_signal_, d_second_signal_, signal_size, scale);
 
     cudaDeviceSynchronize();
 
-    cufft_transformer_->~CudaFastFourierTransform();
+    cuda_result = cudaMemcpy(h_first, d_first_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
 
-    vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(first, signal_size);
+    vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(h_first, signal_size);
 
-    //cufft_transformer_->SetDeviceSignalFromVector(multiplication);
-    //cufft_transformer_->InverseTransform();
+    cufft_transformer_->SetDeviceSignalFromVector(multiplication);
+    cufft_transformer_->InverseTransform();
 
     return multiplication;
 }

@@ -81,8 +81,6 @@ public:
         total_pages_ = signal_size_ / page_size_;
         signal_memory_size_ = signal_size_ * sizeof(cufftComplex);
 
-        cudaSetDevice(0);
-
         test_output << std::endl << "Constructing the CUFFT Context with the following parameters: " << std::endl
                   << "Signal Size: " << signal_size_ << std::endl
                   << "Page Size: " << page_size_ << std::endl

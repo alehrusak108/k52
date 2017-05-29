@@ -83,7 +83,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     //cufft_transformer_->SetDeviceSignalFromVector(multiplication);
     //cufft_transformer_->InverseTransform();
 
-    return cufft_transformer_->GetTransformResult();
+    return multiplication;
 }
 
 #endif //BUILD_WITH_CUDA

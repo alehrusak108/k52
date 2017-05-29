@@ -52,7 +52,7 @@ void CudaUtils::checkCufftErrors(cufftResult result, const string &failure_messa
     if (result != CUFFT_SUCCESS)
     {
         std::cout << std::endl << "[ K52 CUFFT Library FATAL ERROR ] " << failure_message << " returned " << (int) result << std::endl;
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
 }
 
@@ -60,7 +60,7 @@ void CudaUtils::checkErrors(cudaError error, const string &failure_message) {
     if (error != cudaSuccess)
     {
         std::cout << std::endl << "[ K52 CUFFT Library FATAL ERROR ] " << failure_message << " returned " << (int) error << std::endl;
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
 }
 

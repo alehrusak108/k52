@@ -151,6 +151,8 @@ public:
             CudaUtils::checkCufftErrors(cufft_result, "CUFFT FORWARD C2C execution");
 
             CopyPageToSignal<<<128, 256>>>(device_signal_, device_signal_page_, page_size_, from_index);
+
+            cudaDeviceSynchronize();
         }
     }
 

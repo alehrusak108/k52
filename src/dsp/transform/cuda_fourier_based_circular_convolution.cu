@@ -13,6 +13,7 @@
 #include <boost/smart_ptr/make_shared.hpp>
 #include <k52/dsp/transform/util/cuda_utils.h>
 #include "../../../../../../../usr/local/cuda/include/device_launch_parameters.h"
+#include "../../../../../../../usr/local/cuda/include/cuda_runtime_api.h"
 
 // TODO: DELETE THIS IMPORTS - THEY ARE ONLY FOR CLION COMPILATION PURPOSE
 
@@ -74,6 +75,8 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     float scale = 1.0f / signal_size;
     MultiplySignals<<<256, 512>>>(first, second, signal_size, scale);
+
+    cudaDeviceSynchronize();
 
     vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(first, signal_size);
 

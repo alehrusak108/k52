@@ -136,8 +136,6 @@ public:
 
     void Transform(int transform_direction)
     {
-        cudaSetDevice(0);
-
         // MAKE device_signal 1D and copy arrays in __global__ function
         for (size_t page_number = 0; page_number < total_pages_; page_number++)
         {

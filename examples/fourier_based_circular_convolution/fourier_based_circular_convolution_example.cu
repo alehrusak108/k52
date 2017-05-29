@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
         vector<complex<double> > first_signal = Helpers::GenerateComplexSignal(signal_size);
         vector<complex<double> > second_signal = Helpers::GenerateComplexSignal(signal_size);
         CudaConvolutionTest(first_signal, second_signal);
-        test_output << "-----------------------------------------------------------------------" << endl << endl;
+        test_output << endl;
         FFTWConvolutionTest(first_signal, second_signal);
         test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;

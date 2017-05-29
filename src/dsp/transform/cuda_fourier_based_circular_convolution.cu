@@ -50,13 +50,13 @@ CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t 
     cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(signal_size, page_size_);
     this->page_size_ = page_size;
 
-    size_t signal_memory_size = signal_size * sizeof(cufftComplex);
+    signal_memory_size_ = signal_size * sizeof(cufftComplex);
     cudaError cuda_result;
 
-    cuda_result = cudaMalloc((void **) &d_first_signal_, signal_memory_size);
+    cuda_result = cudaMalloc((void **) &d_first_signal_, signal_memory_size_);
     CudaUtils::checkErrors(cuda_result, "Convolution: allocation 1 on single GPU");
 
-    cuda_result = cudaMalloc((void **) &d_second_signal_, signal_memory_size);
+    cuda_result = cudaMalloc((void **) &d_second_signal_, signal_memory_size_);
     CudaUtils::checkErrors(cuda_result, "Convolution: allocation 2 on single GPU");
 }
 
@@ -71,15 +71,15 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     size_t signal_size = first_signal.size();
 
-    std::cout << "1" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(first_signal);
     cufft_transformer_->DirectTransform();
     vector<complex<double> > first_transform = cufft_transformer_->GetTransformResult();
+    std::cout << "1" << std::endl;
 
-    std::cout << "2" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(second_signal);
     cufft_transformer_->DirectTransform();
     vector<complex<double> > second_transform = cufft_transformer_->GetTransformResult();
+    std::cout << "2" << std::endl;
 
     cufftComplex *h_first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
     cufftComplex *h_second = CudaUtils::VectorToCufftComplexAlloc(second_transform);

@@ -22,7 +22,7 @@
 
 #define CUFFT_EXECUTIONS_PLANNED 1
 
-#define PAGE_SIZE 8
+#define PAGE_SIZE 262144
 
 using namespace std;
 
@@ -87,9 +87,9 @@ int main(int argc, char* argv[])
     ofstream test_output;
     test_output.open("convolution_test.txt", ios::out | ios::app);
     test_output << endl << "CONVOLUTION PERFORMANCE TEST (FFTW vs CUDA)" << endl << endl;
-    size_t signal_size = 64;//2097152;
-    //for (int test_index = 1; test_index <= 7; test_index++) {
-        //test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;
+    size_t signal_size = 2097152;
+    for (int test_index = 1; test_index <= 7; test_index++) {
+        test_output << endl << "TEST #" << test_index << "\t" << "Signal Length is: " << signal_size << endl;
         vector<complex<double> > first_signal = Helpers::GenerateComplexSignal(signal_size);
         vector<complex<double> > second_signal = Helpers::GenerateComplexSignal(signal_size);
         CudaConvolutionTest(first_signal, second_signal);
@@ -97,6 +97,6 @@ int main(int argc, char* argv[])
         FFTWConvolutionTest(first_signal, second_signal);
         test_output << "===============================================================================" << endl << endl;
         signal_size *= 2;
-    //}
+    }
     test_output.close();
 }

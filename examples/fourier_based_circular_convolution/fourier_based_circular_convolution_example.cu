@@ -41,7 +41,7 @@ void CudaConvolutionTest(vector<complex<double> > first_signal, vector<complex<d
 
     clock_t cufft_time = clock();
     vector<complex<double> > output = cufft_convolutor.EvaluateConvolution(first_signal, second_signal);
-    Helpers::PrintComplexVector(output);
+    //Helpers::PrintComplexVector(output);
     test_output << endl << "CUFFT CONVOLUTION TIME: " << (double) (clock() - cufft_time) / CLOCKS_PER_SEC << " seconds" << endl << endl;
 }
 

@@ -73,12 +73,12 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cufftComplex *first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
     cufftComplex *second = CudaUtils::VectorToCufftComplexAlloc(second_transform);
 
-    cufft_transformer_->~CudaFastFourierTransform();
-
     float scale = 1.0f / signal_size;
     MultiplySignals<<<256, 512>>>(first, second, signal_size, scale);
 
     cudaDeviceSynchronize();
+
+    cufft_transformer_->~CudaFastFourierTransform();
 
     vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(first, signal_size);
 

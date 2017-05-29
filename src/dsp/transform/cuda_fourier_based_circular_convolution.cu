@@ -71,10 +71,12 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     size_t signal_size = first_signal.size();
 
+    std::cout << "1" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(first_signal);
     cufft_transformer_->DirectTransform();
     vector<complex<double> > first_transform = cufft_transformer_->GetTransformResult();
 
+    std::cout << "2" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(second_signal);
     cufft_transformer_->DirectTransform();
     vector<complex<double> > second_transform = cufft_transformer_->GetTransformResult();
@@ -84,10 +86,10 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     cudaError cuda_result;
     cuda_result = cudaMemcpy(d_first_signal_, h_first, signal_memory_size_, cudaMemcpyHostToDevice);
-    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 1 setting signal from vector. Copy from Host to Device");
 
     cuda_result = cudaMemcpy(d_second_signal_, h_second, signal_memory_size_, cudaMemcpyHostToDevice);
-    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 2 setting signal from vector. Copy from Host to Device");
 
     float scale = 1.0f / signal_size;
     MultiplySignals<<<256, 512>>>(d_first_signal_, d_second_signal_, signal_size, scale);
@@ -95,7 +97,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     cudaDeviceSynchronize();
 
     cuda_result = cudaMemcpy(h_first, d_first_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector setting signal from vector. Copy from Host to Device");
+    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 3 setting signal from vector. Copy from Host to Device");
 
     vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(h_first, signal_size);
 

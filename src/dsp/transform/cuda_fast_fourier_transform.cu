@@ -107,15 +107,15 @@ public:
 
         test_output << "Destroying CUFFT Context..." << std::endl << std::endl;
 
-        cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
-        CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
-
         cudaError cuda_result;
         cuda_result = cudaFree(device_signal_);
         CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree for device_signal_");
 
         cuda_result = cudaFree(device_signal_page_);
         CudaUtils::checkErrors(cuda_result, "CUFFT cudaFree for device_signal_page_");
+
+        cufftResult cufft_result = cufftDestroy(cufft_execution_plan_);
+        CudaUtils::checkCufftErrors(cufft_result, "CUFFT Execution Plan destructor");
 
         free(host_signal_);
 

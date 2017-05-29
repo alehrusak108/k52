@@ -99,6 +99,7 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(h_first, signal_size);
 
+    std::cout << "multiplication" << std::endl;
     cufft_transformer_->SetDeviceSignalFromVector(multiplication);
     cufft_transformer_->InverseTransform();
 

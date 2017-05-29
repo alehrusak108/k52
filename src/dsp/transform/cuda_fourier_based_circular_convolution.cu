@@ -73,14 +73,11 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     cufft_transformer_->SetDeviceSignalFromVector(first_signal);
     cufft_transformer_->DirectTransform();
-    vector<complex<double> > first_transform = cufft_transformer_->GetTransformResult();
+    cufftComplex *h_first = cufft_transformer_->GetTransformResultArray();
 
     cufft_transformer_->SetDeviceSignalFromVector(second_signal);
     cufft_transformer_->DirectTransform();
-    vector<complex<double> > second_transform = cufft_transformer_->GetTransformResult();
-
-    cufftComplex *h_first = CudaUtils::VectorToCufftComplexAlloc(first_transform);
-    cufftComplex *h_second = CudaUtils::VectorToCufftComplexAlloc(second_transform);
+    cufftComplex *h_second = cufft_transformer_->GetTransformResultArray();
 
     cudaError cuda_result;
     cuda_result = cudaMemcpy(d_first_signal_, h_first, signal_memory_size_, cudaMemcpyHostToDevice);

@@ -28,7 +28,6 @@ using ::k52::common::Helpers;
 
 // CUDA kernel function used to multiply two signals in parallel
 // NOTE: Result is written instead of first signal
-// TODO: Why CUFFT doesn't scale result signal on it's length, but FFTW does?
 __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int signal_size, float scale)
 {
     // Elements of the result of signals multiplication are calculated in parallel
@@ -47,17 +46,18 @@ __global__ void MultiplySignals(cufftComplex *first, cufftComplex *second, int s
 
 CudaFourierBasedCircularConvolution::CudaFourierBasedCircularConvolution(size_t signal_size, size_t page_size)
 {
-    cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(signal_size, page_size_);
+    cufft_transformer_ = boost::make_shared<CudaFastFourierTransform>(signal_size, page_size);
     this->page_size_ = page_size;
 
     signal_memory_size_ = signal_size * sizeof(cufftComplex);
-    cudaError cuda_result;
+
+    /*cudaError cuda_result;
 
     cuda_result = cudaMalloc((void **) &d_first_signal_, signal_memory_size_);
     CudaUtils::checkErrors(cuda_result, "Convolution: allocation 1 on single GPU");
 
     cuda_result = cudaMalloc((void **) &d_second_signal_, signal_memory_size_);
-    CudaUtils::checkErrors(cuda_result, "Convolution: allocation 2 on single GPU");
+    CudaUtils::checkErrors(cuda_result, "Convolution: allocation 2 on single GPU");*/
 }
 
 vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolution(
@@ -73,30 +73,25 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
 
     cufft_transformer_->SetDeviceSignalFromVector(first_signal);
     cufft_transformer_->DirectTransform();
-    cufftComplex *h_first = cufft_transformer_->GetTransformResultArray();
+    cufftComplex *first_transform = cufft_transformer_->GetTransformResultArray();
 
     cufft_transformer_->SetDeviceSignalFromVector(second_signal);
     cufft_transformer_->DirectTransform();
-    cufftComplex *h_second = cufft_transformer_->GetTransformResultArray();
+    cufftComplex *second_transform = cufft_transformer_->GetTransformResultArray();
 
-    cudaError cuda_result;
+    /*cudaError cuda_result;
     cuda_result = cudaMemcpy(d_first_signal_, h_first, signal_memory_size_, cudaMemcpyHostToDevice);
     CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 1 setting signal from vector. Copy from Host to Device");
 
     cuda_result = cudaMemcpy(d_second_signal_, h_second, signal_memory_size_, cudaMemcpyHostToDevice);
     CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 2 setting signal from vector. Copy from Host to Device");
-
+*/
     float scale = 1.0f / signal_size;
-    MultiplySignals<<<256, 512>>>(d_first_signal_, d_second_signal_, signal_size, scale);
+    MultiplySignals<<<256, 512>>>(first_transform, second_transform, signal_size, scale);
 
     cudaDeviceSynchronize();
 
-    cuda_result = cudaMemcpy(h_first, d_first_signal_, signal_memory_size_, cudaMemcpyDeviceToHost);
-    CudaUtils::checkErrors(cuda_result, "CUFFT SetDeviceSignalFromVector 3 setting signal from vector. Copy from Host to Device");
-
-    vector<complex<double> > multiplication = CudaUtils::CufftComplexToVector(h_first, signal_size);
-
-    cufft_transformer_->SetDeviceSignalFromVector(multiplication);
+    cufft_transformer_->SetDeviceSignal(first_transform);
     cufft_transformer_->InverseTransform();
 
     return cufft_transformer_->GetTransformResult();

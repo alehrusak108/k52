@@ -89,8 +89,6 @@ vector<complex<double> > CudaFourierBasedCircularConvolution::EvaluateConvolutio
     float scale = 1.0f / signal_size;
     MultiplySignals<<<256, 512>>>(first_transform, second_transform, signal_size, scale);
 
-    cudaDeviceSynchronize();
-
     cufft_transformer_->SetDeviceSignal(first_transform);
     cufft_transformer_->InverseTransform();
 
